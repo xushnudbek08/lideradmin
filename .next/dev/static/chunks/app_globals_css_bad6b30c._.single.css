@@ -91,6 +91,7 @@
     --color-yellow-500: #edb200;
     --color-green-500: #00c758;
     --color-blue-500: #3080ff;
+    --color-blue-600: #155dfc;
     --color-purple-500: #ac4bff;
     --color-gray-400: #99a1af;
     --color-gray-500: #6a7282;
@@ -159,6 +160,7 @@
       --color-yellow-500: lab(76.3898% 14.5258 98.4589);
       --color-green-500: lab(70.5521% -66.5147 45.8073);
       --color-blue-500: lab(54.1736% 13.3369 -74.6839);
+      --color-blue-600: lab(44.0605% 29.0279 -86.0352);
       --color-purple-500: lab(52.0183% 66.11 -78.2316);
       --color-gray-400: lab(65.9269% -.832707 -8.17473);
       --color-gray-500: lab(47.7841% -.393182 -10.0268);
@@ -757,6 +759,10 @@
     margin-top: calc(var(--spacing) * 4);
   }
 
+  .mt-6 {
+    margin-top: calc(var(--spacing) * 6);
+  }
+
   .mt-auto {
     margin-top: auto;
   }
@@ -1012,6 +1018,10 @@
     height: calc(100% - 1px);
   }
 
+  .h-\[calc\(100vh-250px\)\] {
+    height: calc(100vh - 250px);
+  }
+
   .h-\[var\(--radix-navigation-menu-viewport-height\)\] {
     height: var(--radix-navigation-menu-viewport-height);
   }
@@ -1148,8 +1158,8 @@
     width: calc(var(--spacing) * 16);
   }
 
-  .w-48 {
-    width: calc(var(--spacing) * 48);
+  .w-56 {
+    width: calc(var(--spacing) * 56);
   }
 
   .w-64 {
@@ -1202,6 +1212,10 @@
 
   .max-w-4xl {
     max-width: var(--container-4xl);
+  }
+
+  .max-w-\[70\%\] {
+    max-width: 70%;
   }
 
   .max-w-\[calc\(100\%-2rem\)\] {
@@ -1618,6 +1632,10 @@
     overflow-y: auto;
   }
 
+  .rounded {
+    border-radius: .25rem;
+  }
+
   .rounded-2xl {
     border-radius: var(--radius-2xl);
   }
@@ -1911,6 +1929,10 @@
     .bg-black\/50 {
       background-color: color-mix(in oklab, var(--color-black) 50%, transparent);
     }
+  }
+
+  .bg-blue-500 {
+    background-color: var(--color-blue-500);
   }
 
   .bg-blue-500\/10 {
@@ -2239,6 +2261,10 @@
     padding-top: calc(var(--spacing) * 0);
   }
 
+  .pt-2 {
+    padding-top: calc(var(--spacing) * 2);
+  }
+
   .pt-3 {
     padding-top: calc(var(--spacing) * 3);
   }
@@ -2444,6 +2470,10 @@
 
   .whitespace-nowrap {
     white-space: nowrap;
+  }
+
+  .\!text-blue-500 {
+    color: var(--color-blue-500) !important;
   }
 
   .text-accent {
@@ -3106,18 +3136,12 @@
     border-color: var(--primary);
   }
 
-  .peer-data-\[state\=checked\]\:bg-primary\/10:is(:where(.peer)[data-state="checked"] ~ *) {
+  .peer-data-\[state\=checked\]\:bg-primary:is(:where(.peer)[data-state="checked"] ~ *) {
     background-color: var(--primary);
   }
 
-  @supports (color: color-mix(in lab, red, red)) {
-    .peer-data-\[state\=checked\]\:bg-primary\/10:is(:where(.peer)[data-state="checked"] ~ *) {
-      background-color: color-mix(in oklab, var(--primary) 10%, transparent);
-    }
-  }
-
-  .peer-data-\[state\=checked\]\:text-primary:is(:where(.peer)[data-state="checked"] ~ *) {
-    color: var(--primary);
+  .peer-data-\[state\=checked\]\:text-primary-foreground:is(:where(.peer)[data-state="checked"] ~ *) {
+    color: var(--primary-foreground);
   }
 
   .selection\:bg-primary ::selection, .selection\:bg-primary::selection {
@@ -3318,8 +3342,20 @@
   }
 
   @media (hover: hover) {
+    .hover\:\!text-blue-600:hover {
+      color: var(--color-blue-600) !important;
+    }
+  }
+
+  @media (hover: hover) {
     .hover\:text-accent-foreground:hover {
       color: var(--accent-foreground);
+    }
+  }
+
+  @media (hover: hover) {
+    .hover\:text-blue-600:hover {
+      color: var(--color-blue-600);
     }
   }
 
@@ -4197,6 +4233,14 @@
     background-color: var(--background);
   }
 
+  .data-\[state\=active\]\:bg-primary[data-state="active"] {
+    background-color: var(--primary);
+  }
+
+  .data-\[state\=active\]\:text-primary-foreground[data-state="active"] {
+    color: var(--primary-foreground);
+  }
+
   .data-\[state\=active\]\:shadow-sm[data-state="active"] {
     --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, #0000001a), 0 1px 2px -1px var(--tw-shadow-color, #0000001a);
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
@@ -5043,14 +5087,6 @@
 
   .dark\:text-muted-foreground:is(.dark *) {
     color: var(--muted-foreground);
-  }
-
-  .dark\:opacity-90:is(.dark *) {
-    opacity: .9;
-  }
-
-  .dark\:opacity-95:is(.dark *) {
-    opacity: .95;
   }
 
   @media (hover: hover) {

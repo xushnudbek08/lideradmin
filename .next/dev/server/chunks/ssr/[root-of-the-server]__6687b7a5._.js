@@ -282,6 +282,17 @@ const companiesApi = {
             body: JSON.stringify(data)
         });
         return handleResponse(response);
+    },
+    update: async (id, data)=>{
+        const response = await fetch(`${API_BASE_URL}/companies/${id}/`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify(data)
+        });
+        return handleResponse(response);
     }
 };
 const documentsApi = {

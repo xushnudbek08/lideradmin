@@ -162,14 +162,6 @@ export default function ClientProfilePage() {
               <p className="text-xs text-muted-foreground">Имя пользователя нельзя изменить</p>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-foreground">Роль</Label>
-              <Input
-                value={user.role === "client" ? "Клиент" : user.role}
-                disabled
-                className="bg-muted border-border text-muted-foreground cursor-not-allowed"
-              />
-            </div>
 
             <div className="flex justify-end gap-3 pt-4">
               <Button
@@ -209,4 +201,6 @@ export default function ClientProfilePage() {
     </div>
   )
 }
+
+
 

@@ -441,11 +441,14 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$filter$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Filter$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/filter.js [app-client] (ecmascript) <export default as Filter>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$eye$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Eye$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/eye.js [app-client] (ecmascript) <export default as Eye>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$clock$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Clock$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/clock.js [app-client] (ecmascript) <export default as Clock>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/loader-circle.js [app-client] (ecmascript) <export default as Loader2>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/components/ui/card.tsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/components/ui/button.tsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/components/ui/input.tsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/components/ui/badge.tsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/components/ui/select.tsx [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/lib/api.ts [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/navigation.js [app-client] (ecmascript)");
 ;
 var _s = __turbopack_context__.k.signature();
 "use client";
@@ -456,50 +459,81 @@ var _s = __turbopack_context__.k.signature();
 ;
 ;
 ;
-const applications = [
-    {
-        id: "ZAY-101",
-        type: "Банковская гарантия",
-        amount: "5 000 000 ₽",
-        bank: "Сбербанк",
-        status: "Одобрено",
-        date: "15.01.2025",
-        deadline: "25.01.2025"
-    },
-    {
-        id: "ZAY-102",
-        type: "Кредитная линия",
-        amount: "10 000 000 ₽",
-        bank: "ВТБ",
-        status: "На рассмотрении",
-        date: "14.01.2025",
-        deadline: "30.01.2025"
-    },
-    {
-        id: "ZAY-103",
-        type: "Банковская гарантия",
-        amount: "2 500 000 ₽",
-        bank: "Альфа-Банк",
-        status: "В работе",
-        date: "12.01.2025",
-        deadline: "28.01.2025"
-    }
-];
+;
+;
 const statusColors = {
-    "На рассмотрении": "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-    Одобрено: "bg-green-500/10 text-green-500 border-green-500/20",
-    "В работе": "bg-blue-500/10 text-blue-500 border-blue-500/20",
-    Отклонено: "bg-red-500/10 text-red-500 border-red-500/20"
+    draft: "bg-gray-500/10 text-gray-500 border-gray-500/20",
+    submitted: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+    under_review: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+    approved: "bg-green-500/10 text-green-500 border-green-500/20",
+    rejected: "bg-red-500/10 text-red-500 border-red-500/20"
+};
+const statusLabels = {
+    draft: "Черновик",
+    submitted: "Отправлено",
+    under_review: "На рассмотрении",
+    approved: "Одобрено",
+    rejected: "Отклонено"
 };
 function ClientApplicationsPage() {
     _s();
     const [searchQuery, setSearchQuery] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])("");
     const [statusFilter, setStatusFilter] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])("all");
+    const [applications, setApplications] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
+    const [loading, setLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(true);
+    const router = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"])();
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "ClientApplicationsPage.useEffect": ()=>{
+            const fetchApplications = {
+                "ClientApplicationsPage.useEffect.fetchApplications": async ()=>{
+                    try {
+                        setLoading(true);
+                        const data = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["applicationsApi"].getMyApplications();
+                        const formatted = data.map({
+                            "ClientApplicationsPage.useEffect.fetchApplications.formatted": (app)=>({
+                                    id: app.id,
+                                    idDisplay: `ZAY-${String(app.id).padStart(3, "0")}`,
+                                    type: app.title || "Банковская гарантия",
+                                    amount: app.amount ? `${parseFloat(app.amount).toLocaleString("ru-RU")} ₽` : "Не указано",
+                                    bank: app.selected_banks && app.selected_banks.length > 0 ? app.selected_banks[0].name : "Не выбран",
+                                    status: app.status,
+                                    statusLabel: statusLabels[app.status] || app.status,
+                                    date: new Date(app.created_at).toLocaleDateString("ru-RU"),
+                                    deadline: app.updated_at ? new Date(app.updated_at).toLocaleDateString("ru-RU") : ""
+                                })
+                        }["ClientApplicationsPage.useEffect.fetchApplications.formatted"]);
+                        setApplications(formatted);
+                    } catch (error) {
+                        console.error("Error fetching applications:", error);
+                    } finally{
+                        setLoading(false);
+                    }
+                }
+            }["ClientApplicationsPage.useEffect.fetchApplications"];
+            fetchApplications();
+        }
+    }["ClientApplicationsPage.useEffect"], []);
     const filteredApplications = applications.filter((app)=>{
-        const matchesSearch = app.id.toLowerCase().includes(searchQuery.toLowerCase()) || app.type.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesSearch = app.idDisplay.toLowerCase().includes(searchQuery.toLowerCase()) || app.type.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStatus = statusFilter === "all" || app.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
+    if (loading) {
+        return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "flex items-center justify-center min-h-[400px]",
+            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__["Loader2"], {
+                className: "w-8 h-8 animate-spin text-muted-foreground"
+            }, void 0, false, {
+                fileName: "[project]/app/dashboard/client/applications/page.tsx",
+                lineNumber: 74,
+                columnNumber: 9
+            }, this)
+        }, void 0, false, {
+            fileName: "[project]/app/dashboard/client/applications/page.tsx",
+            lineNumber: 73,
+            columnNumber: 7
+        }, this);
+    }
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "space-y-6",
         children: [
@@ -517,7 +551,7 @@ function ClientApplicationsPage() {
                                         className: "absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
                                     }, void 0, false, {
                                         fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                        lineNumber: 67,
+                                        lineNumber: 86,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
@@ -527,13 +561,13 @@ function ClientApplicationsPage() {
                                         className: "pl-9 bg-input border-border text-foreground"
                                     }, void 0, false, {
                                         fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                        lineNumber: 68,
+                                        lineNumber: 87,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                lineNumber: 66,
+                                lineNumber: 85,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Select"], {
@@ -547,20 +581,20 @@ function ClientApplicationsPage() {
                                                 className: "w-4 h-4 mr-2"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                lineNumber: 77,
+                                                lineNumber: 96,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectValue"], {
                                                 placeholder: "Статус"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                lineNumber: 78,
+                                                lineNumber: 97,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                        lineNumber: 76,
+                                        lineNumber: 95,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectContent"], {
@@ -571,70 +605,78 @@ function ClientApplicationsPage() {
                                                 children: "Все статусы"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                lineNumber: 81,
+                                                lineNumber: 100,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectItem"], {
-                                                value: "На рассмотрении",
+                                                value: "draft",
+                                                children: "Черновик"
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/dashboard/client/applications/page.tsx",
+                                                lineNumber: 101,
+                                                columnNumber: 17
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectItem"], {
+                                                value: "submitted",
+                                                children: "Отправлено"
+                                            }, void 0, false, {
+                                                fileName: "[project]/app/dashboard/client/applications/page.tsx",
+                                                lineNumber: 102,
+                                                columnNumber: 17
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectItem"], {
+                                                value: "under_review",
                                                 children: "На рассмотрении"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                lineNumber: 82,
+                                                lineNumber: 103,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectItem"], {
-                                                value: "В работе",
-                                                children: "В работе"
-                                            }, void 0, false, {
-                                                fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                lineNumber: 83,
-                                                columnNumber: 17
-                                            }, this),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectItem"], {
-                                                value: "Одобрено",
+                                                value: "approved",
                                                 children: "Одобрено"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                lineNumber: 84,
+                                                lineNumber: 104,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectItem"], {
-                                                value: "Отклонено",
+                                                value: "rejected",
                                                 children: "Отклонено"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                lineNumber: 85,
+                                                lineNumber: 105,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                        lineNumber: 80,
+                                        lineNumber: 99,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                lineNumber: 75,
+                                lineNumber: 94,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                        lineNumber: 65,
+                        lineNumber: 84,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                    lineNumber: 64,
+                    lineNumber: 83,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                lineNumber: 63,
+                lineNumber: 82,
                 columnNumber: 7
             }, this),
-            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            filteredApplications.length > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4",
                 children: filteredApplications.map((app)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Card"], {
                         className: "bg-card border-border hover:border-primary/50 transition-colors",
@@ -648,44 +690,44 @@ function ClientApplicationsPage() {
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                     className: "text-primary font-medium",
-                                                    children: app.id
+                                                    children: app.idDisplay
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                    lineNumber: 99,
-                                                    columnNumber: 19
+                                                    lineNumber: 120,
+                                                    columnNumber: 21
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardTitle"], {
                                                     className: "text-base text-foreground mt-1",
                                                     children: app.type
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                    lineNumber: 100,
-                                                    columnNumber: 19
+                                                    lineNumber: 121,
+                                                    columnNumber: 21
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                            lineNumber: 98,
-                                            columnNumber: 17
+                                            lineNumber: 119,
+                                            columnNumber: 19
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Badge"], {
                                             className: statusColors[app.status],
-                                            children: app.status
+                                            children: app.statusLabel
                                         }, void 0, false, {
                                             fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                            lineNumber: 102,
-                                            columnNumber: 17
+                                            lineNumber: 123,
+                                            columnNumber: 19
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                    lineNumber: 97,
-                                    columnNumber: 15
+                                    lineNumber: 118,
+                                    columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                lineNumber: 96,
-                                columnNumber: 13
+                                lineNumber: 117,
+                                columnNumber: 15
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
                                 className: "space-y-4",
@@ -701,22 +743,22 @@ function ClientApplicationsPage() {
                                                         children: "Сумма:"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                        lineNumber: 108,
-                                                        columnNumber: 19
+                                                        lineNumber: 129,
+                                                        columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                         className: "text-foreground font-medium",
                                                         children: app.amount
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                        lineNumber: 109,
-                                                        columnNumber: 19
+                                                        lineNumber: 130,
+                                                        columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                lineNumber: 107,
-                                                columnNumber: 17
+                                                lineNumber: 128,
+                                                columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                 className: "flex justify-between text-sm",
@@ -726,22 +768,22 @@ function ClientApplicationsPage() {
                                                         children: "Банк:"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                        lineNumber: 112,
-                                                        columnNumber: 19
+                                                        lineNumber: 133,
+                                                        columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                         className: "text-foreground",
                                                         children: app.bank
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                        lineNumber: 113,
-                                                        columnNumber: 19
+                                                        lineNumber: 134,
+                                                        columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                lineNumber: 111,
-                                                columnNumber: 17
+                                                lineNumber: 132,
+                                                columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                 className: "flex justify-between text-sm",
@@ -751,99 +793,125 @@ function ClientApplicationsPage() {
                                                         children: "Дата подачи:"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                        lineNumber: 116,
-                                                        columnNumber: 19
+                                                        lineNumber: 137,
+                                                        columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                         className: "text-foreground",
                                                         children: app.date
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                        lineNumber: 117,
-                                                        columnNumber: 19
+                                                        lineNumber: 138,
+                                                        columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                lineNumber: 115,
-                                                columnNumber: 17
+                                                lineNumber: 136,
+                                                columnNumber: 19
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                        lineNumber: 106,
-                                        columnNumber: 15
+                                        lineNumber: 127,
+                                        columnNumber: 17
                                     }, this),
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    app.deadline && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                         className: "flex items-center gap-2 p-3 bg-secondary rounded-lg",
                                         children: [
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$clock$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Clock$3e$__["Clock"], {
                                                 className: "w-4 h-4 text-muted-foreground"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                lineNumber: 122,
-                                                columnNumber: 17
+                                                lineNumber: 144,
+                                                columnNumber: 21
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                 className: "text-sm text-muted-foreground",
                                                 children: [
-                                                    "Дедлайн: ",
+                                                    "Обновлено: ",
                                                     app.deadline
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                lineNumber: 123,
-                                                columnNumber: 17
+                                                lineNumber: 145,
+                                                columnNumber: 21
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                        lineNumber: 121,
-                                        columnNumber: 15
+                                        lineNumber: 143,
+                                        columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
                                         variant: "outline",
                                         className: "w-full border-border text-foreground bg-transparent",
+                                        onClick: ()=>router.push(`/dashboard/client/applications/${app.id}`),
                                         children: [
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$eye$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Eye$3e$__["Eye"], {
                                                 className: "w-4 h-4 mr-2"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                                lineNumber: 127,
-                                                columnNumber: 17
+                                                lineNumber: 154,
+                                                columnNumber: 19
                                             }, this),
                                             "Подробнее"
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                        lineNumber: 126,
-                                        columnNumber: 15
+                                        lineNumber: 149,
+                                        columnNumber: 17
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                                lineNumber: 105,
-                                columnNumber: 13
+                                lineNumber: 126,
+                                columnNumber: 15
                             }, this)
                         ]
                     }, app.id, true, {
                         fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                        lineNumber: 95,
-                        columnNumber: 11
+                        lineNumber: 116,
+                        columnNumber: 13
                     }, this))
             }, void 0, false, {
                 fileName: "[project]/app/dashboard/client/applications/page.tsx",
-                lineNumber: 93,
-                columnNumber: 7
+                lineNumber: 114,
+                columnNumber: 9
+            }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Card"], {
+                className: "bg-card border-border",
+                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
+                    className: "p-12 text-center",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                        className: "text-muted-foreground",
+                        children: "Заявки не найдены"
+                    }, void 0, false, {
+                        fileName: "[project]/app/dashboard/client/applications/page.tsx",
+                        lineNumber: 164,
+                        columnNumber: 13
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/app/dashboard/client/applications/page.tsx",
+                    lineNumber: 163,
+                    columnNumber: 11
+                }, this)
+            }, void 0, false, {
+                fileName: "[project]/app/dashboard/client/applications/page.tsx",
+                lineNumber: 162,
+                columnNumber: 9
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/app/dashboard/client/applications/page.tsx",
-        lineNumber: 61,
+        lineNumber: 80,
         columnNumber: 5
     }, this);
 }
-_s(ClientApplicationsPage, "vbCrFQDhzyjF+Jw5Jtg5/1a7Ho0=");
+_s(ClientApplicationsPage, "StHtXSxCQLPailAbzHlyy7zZDgk=", false, function() {
+    return [
+        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"]
+    ];
+});
 _c = ClientApplicationsPage;
 var _c;
 __turbopack_context__.k.register(_c, "ClientApplicationsPage");

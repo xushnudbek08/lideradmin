@@ -31,6 +31,15 @@ export function DashboardHeader({ title, onMenuClick }: DashboardHeaderProps) {
     return "/auth/login"
   }
 
+  const getSettingsLink = () => {
+    if (!user) return "/auth/login"
+    const role = user.role
+    if (role === "client") return "/dashboard/client/settings"
+    if (role === "agent") return "/dashboard/agent/settings"
+    if (role === "partner") return "/dashboard/partner/settings"
+    return "/auth/login"
+  }
+
   const handleLogout = () => {
     logout()
   }
@@ -38,7 +47,7 @@ export function DashboardHeader({ title, onMenuClick }: DashboardHeaderProps) {
     <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="flex items-center justify-between h-16 px-4 lg:px-6">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="lg:hidden text-foreground" onClick={onMenuClick}>
+          <Button variant="ghost" size="icon" className="lg:hidden !text-blue-500 hover:!text-blue-600" onClick={onMenuClick}>
             <Menu className="w-5 h-5" />
           </Button>
           <h1 className="text-lg lg:text-xl font-semibold text-foreground">{title}</h1>
@@ -47,7 +56,7 @@ export function DashboardHeader({ title, onMenuClick }: DashboardHeaderProps) {
         <div className="flex items-center gap-2 lg:gap-4">
           {/* Search - hidden on mobile */}
           <div className="hidden md:flex relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500" />
             <Input
               placeholder="Поиск..."
               className="w-64 pl-9 bg-input border-border text-foreground placeholder:text-muted-foreground"
@@ -55,28 +64,27 @@ export function DashboardHeader({ title, onMenuClick }: DashboardHeaderProps) {
           </div>
 
           {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
+          <Button variant="ghost" size="icon" className="relative !text-blue-500 hover:!text-blue-600">
             <Bell className="w-5 h-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full" />
           </Button>
 
           {/* User menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+              <Button variant="ghost" size="icon" className="!text-blue-500 hover:!text-blue-600">
                 <User className="w-5 h-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 bg-popover border-border">
-              <DropdownMenuLabel className="text-foreground">Мой аккаунт</DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="w-56 bg-popover border-border">
+              <DropdownMenuLabel className="text-foreground">
+                {user?.user?.last_name && user?.user?.first_name
+                  ? `${user.user.last_name} ${user.user.first_name.charAt(0).toUpperCase()}.`
+                  : "Мой аккаунт"}
+              </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-border" />
               <DropdownMenuItem className="text-foreground focus:bg-accent focus:text-accent-foreground">
-                <Link href={getProfileLink()} className="w-full">
-                  Профиль
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-foreground focus:bg-accent focus:text-accent-foreground">
-                <Link href="/settings" className="w-full">
+                <Link href={getSettingsLink()} className="w-full">
                   Настройки
                 </Link>
               </DropdownMenuItem>

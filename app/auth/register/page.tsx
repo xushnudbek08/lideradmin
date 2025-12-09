@@ -97,8 +97,8 @@ export default function RegisterPage() {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
-          <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-            {error}
+          <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm">
+            <p className="text-destructive font-medium">{error}</p>
           </div>
         )}
 
@@ -115,7 +115,7 @@ export default function RegisterPage() {
                 <RadioGroupItem value={r.value} id={`reg-${r.value}`} className="peer sr-only" />
                 <Label
                   htmlFor={`reg-${r.value}`}
-                  className="flex items-center justify-center px-3 py-2 border border-border rounded-lg cursor-pointer text-sm font-medium text-muted-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-data-[state=checked]:bg-primary/10 hover:bg-secondary transition-colors"
+                  className="flex items-center justify-center px-3 py-2 border border-border rounded-lg cursor-pointer text-sm font-medium text-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary-foreground peer-data-[state=checked]:bg-primary hover:bg-secondary transition-colors"
                 >
                   {r.label}
                 </Label>

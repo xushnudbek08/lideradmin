@@ -1,88 +1,121 @@
 "use client"
 
-import { useState } from "react"
-import { Search, Filter, Eye, MoreHorizontal } from "lucide-react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { Search, Filter, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
-const applications = [
-  {
-    id: "ZAY-001",
-    company: "ООО Техносервис",
-    inn: "7712345678",
-    amount: "5 000 000 ₽",
-    bank: "Сбербанк",
-    status: "На рассмотрении",
-    date: "15.01.2025",
-    type: "Юр. Лицо",
-  },
-  {
-    id: "ZAY-002",
-    company: "ИП Петров А.С.",
-    inn: "771234567890",
-    amount: "1 500 000 ₽",
-    bank: "ВТБ",
-    status: "Одобрено",
-    date: "14.01.2025",
-    type: "ИП",
-  },
-  {
-    id: "ZAY-003",
-    company: "ООО СтройМастер",
-    inn: "7787654321",
-    amount: "10 000 000 ₽",
-    bank: "Альфа-Банк",
-    status: "В работе",
-    date: "13.01.2025",
-    type: "Юр. Лицо",
-  },
-  {
-    id: "ZAY-004",
-    company: "ООО ТрансЛогистик",
-    inn: "7798765432",
-    amount: "3 200 000 ₽",
-    bank: "Газпромбанк",
-    status: "Отклонено",
-    date: "12.01.2025",
-    type: "Юр. Лицо",
-  },
-  {
-    id: "ZAY-005",
-    company: "ИП Сидорова Н.М.",
-    inn: "772345678901",
-    amount: "800 000 ₽",
-    bank: "Россельхозбанк",
-    status: "Одобрено",
-    date: "11.01.2025",
-    type: "ИП",
-  },
-]
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { applicationsApi, companiesApi } from "@/lib/api"
+import { toast } from "sonner"
 
 const statusColors: Record<string, string> = {
-  "На рассмотрении": "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-  Одобрено: "bg-green-500/10 text-green-500 border-green-500/20",
-  "В работе": "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  Отклонено: "bg-red-500/10 text-red-500 border-red-500/20",
+  draft: "bg-gray-500/10 text-gray-500 border-gray-500/20",
+  submitted: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  under_review: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+  approved: "bg-green-500/10 text-green-500 border-green-500/20",
+  rejected: "bg-red-500/10 text-red-500 border-red-500/20",
+}
+
+const statusLabels: Record<string, string> = {
+  draft: "Черновик",
+  submitted: "Отправлено",
+  under_review: "На рассмотрении",
+  approved: "Одобрено",
+  rejected: "Отклонено",
 }
 
 export default function AgentApplicationsPage() {
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [productTab, setProductTab] = useState("all")
+  const [applications, setApplications] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const filteredApplications = applications.filter((app) => {
-    const matchesSearch =
-      app.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.inn.includes(searchQuery)
+  useEffect(() => {
+    const fetchApplications = async () => {
+      try {
+        setLoading(true)
+        const data = await applicationsApi.getMyApplications()
+        // Fetch company info for applications that have company
+        const applicationsWithCompany = await Promise.all(
+          data.map(async (app: any) => {
+            if (app.company) {
+              try {
+                const company = await companiesApi.get(app.company)
+                return { ...app, companyData: company }
+              } catch {
+                return app
+              }
+            }
+            return app
+          }),
+        )
+        setApplications(applicationsWithCompany)
+      } catch (error) {
+        console.error("Error fetching applications:", error)
+        toast.error("Ошибка при загрузке заявок")
+      } finally {
+        setLoading(false)
+      }
+    }
 
-    const matchesStatus = statusFilter === "all" || app.status === statusFilter
+    fetchApplications()
+  }, [])
 
-    return matchesSearch && matchesStatus
-  })
+  const filteredApplications = applications
+    .filter((app) => {
+      const matchesSearch =
+        app.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        `ZAY-${String(app.id).padStart(3, "0")}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.applicant?.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.applicant?.last_name?.toLowerCase().includes(searchQuery.toLowerCase())
+
+      const matchesStatus = statusFilter === "all" || app.status === statusFilter
+
+      return matchesSearch && matchesStatus
+    })
+    .map((app) => ({
+      id: app.id,
+      idDisplay: `ZAY-${String(app.id).padStart(3, "0")}`,
+      company: app.applicant ? `${app.applicant.first_name} ${app.applicant.last_name}` : "Не указано",
+      companyId: app.company || null,
+      inn: app.companyData?.inn || "",
+      type: app.company ? "Юр. Лицо" : "ИП", // Simplified
+      amount: app.amount ? `${parseFloat(app.amount).toLocaleString("ru-RU")} ₽` : "Не указано",
+      bank: app.selected_banks && app.selected_banks.length > 0 
+        ? (typeof app.selected_banks[0] === 'object' 
+            ? app.selected_banks[0].name 
+            : "Банк выбран") 
+        : "Не выбран",
+      status: app.status,
+      statusLabel: statusLabels[app.status] || app.status,
+      date: new Date(app.created_at).toLocaleDateString("ru-RU"),
+    }))
+
+  const handleApplicationClick = (id: number) => {
+    router.push(`/dashboard/agent/applications/${id}`)
+  }
+
+  const handleCompanyClick = (companyId: number | null, companyName: string) => {
+    if (companyId) {
+      router.push(`/dashboard/agent/clients/${companyId}`)
+    } else {
+      toast.error("Компания не найдена")
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -106,72 +139,106 @@ export default function AgentApplicationsPage() {
               </SelectTrigger>
               <SelectContent className="bg-popover border-border">
                 <SelectItem value="all">Все статусы</SelectItem>
-                <SelectItem value="На рассмотрении">На рассмотрении</SelectItem>
-                <SelectItem value="В работе">В работе</SelectItem>
-                <SelectItem value="Одобрено">Одобрено</SelectItem>
-                <SelectItem value="Отклонено">Отклонено</SelectItem>
+                <SelectItem value="draft">Черновик</SelectItem>
+                <SelectItem value="submitted">Отправлено</SelectItem>
+                <SelectItem value="under_review">На рассмотрении</SelectItem>
+                <SelectItem value="approved">Одобрено</SelectItem>
+                <SelectItem value="rejected">Отклонено</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Applications Table */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-foreground">Мои заявки ({filteredApplications.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="text-left border-b border-border">
-                  <th className="pb-3 text-sm font-medium text-muted-foreground">№ Заявки</th>
-                  <th className="pb-3 text-sm font-medium text-muted-foreground">Компания</th>
-                  <th className="pb-3 text-sm font-medium text-muted-foreground">ИНН</th>
-                  <th className="pb-3 text-sm font-medium text-muted-foreground">Тип</th>
-                  <th className="pb-3 text-sm font-medium text-muted-foreground">Сумма</th>
-                  <th className="pb-3 text-sm font-medium text-muted-foreground">Банк</th>
-                  <th className="pb-3 text-sm font-medium text-muted-foreground">Статус</th>
-                  <th className="pb-3 text-sm font-medium text-muted-foreground">Дата</th>
-                  <th className="pb-3 text-sm font-medium text-muted-foreground"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredApplications.map((app) => (
-                  <tr key={app.id} className="border-b border-border last:border-0 hover:bg-muted/50">
-                    <td className="py-4 text-sm text-primary font-medium">{app.id}</td>
-                    <td className="py-4 text-sm text-foreground">{app.company}</td>
-                    <td className="py-4 text-sm text-muted-foreground">{app.inn}</td>
-                    <td className="py-4 text-sm text-foreground">{app.type}</td>
-                    <td className="py-4 text-sm text-foreground font-medium">{app.amount}</td>
-                    <td className="py-4 text-sm text-foreground">{app.bank}</td>
-                    <td className="py-4">
-                      <Badge className={statusColors[app.status]}>{app.status}</Badge>
-                    </td>
-                    <td className="py-4 text-sm text-muted-foreground">{app.date}</td>
-                    <td className="py-4">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="text-muted-foreground">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-popover border-border">
-                          <DropdownMenuItem className="text-foreground">
-                            <Eye className="w-4 h-4 mr-2" />
-                            Просмотр
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Product Tabs */}
+      <Tabs value={productTab} onValueChange={setProductTab} className="w-full">
+        <TabsList className="bg-card border-border">
+          <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Все продукты
+          </TabsTrigger>
+          <TabsTrigger value="bank_guarantee" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Банковская гарантия
+          </TabsTrigger>
+          <TabsTrigger value="credit" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Кредит
+          </TabsTrigger>
+          <TabsTrigger value="factoring" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Факторинг
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value={productTab} className="mt-6">
+          {/* Applications Table */}
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="text-foreground">Мои заявки ({filteredApplications.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-left border-b border-border">
+                      <th className="pb-3 text-sm font-medium text-muted-foreground">№ Заявки</th>
+                      <th className="pb-3 text-sm font-medium text-muted-foreground">Компания</th>
+                      <th className="pb-3 text-sm font-medium text-muted-foreground">ИНН</th>
+                      <th className="pb-3 text-sm font-medium text-muted-foreground">Тип</th>
+                      <th className="pb-3 text-sm font-medium text-muted-foreground">Сумма</th>
+                      <th className="pb-3 text-sm font-medium text-muted-foreground">Банк</th>
+                      <th className="pb-3 text-sm font-medium text-muted-foreground">Статус</th>
+                      <th className="pb-3 text-sm font-medium text-muted-foreground">Дата</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredApplications.length > 0 ? (
+                      filteredApplications.map((app) => {
+                        const statusKey = app.status
+                        return (
+                          <tr key={app.id} className="border-b border-border last:border-0 hover:bg-muted/50">
+                            <td className="py-4">
+                              <button
+                                onClick={() => handleApplicationClick(app.id)}
+                                className="text-sm text-primary font-medium hover:underline"
+                              >
+                                {app.idDisplay}
+                              </button>
+                            </td>
+                            <td className="py-4">
+                              {app.companyId ? (
+                                <button
+                                  onClick={() => handleCompanyClick(app.companyId, app.company)}
+                                  className="text-sm text-primary hover:underline text-left"
+                                >
+                                  {app.company}
+                                </button>
+                              ) : (
+                                <span className="text-sm text-foreground">{app.company}</span>
+                              )}
+                            </td>
+                            <td className="py-4 text-sm text-muted-foreground">{app.inn || "—"}</td>
+                            <td className="py-4 text-sm text-foreground">{app.type}</td>
+                            <td className="py-4 text-sm text-foreground font-medium">{app.amount}</td>
+                            <td className="py-4 text-sm text-foreground">{app.bank}</td>
+                            <td className="py-4">
+                              <Badge className={statusColors[statusKey]}>{app.statusLabel}</Badge>
+                            </td>
+                            <td className="py-4 text-sm text-muted-foreground">{app.date}</td>
+                          </tr>
+                        )
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan={8} className="py-8 text-center text-muted-foreground">
+                          Нет заявок
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  HelpCircle,
   MessageCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -43,7 +44,7 @@ const menuItems: Record<UserRole, MenuItem[]> = {
     { label: "Мой договор", href: "/dashboard/agent/contract", icon: FileSignature },
     { label: "Индивидуальное рассмотрение", href: "/dashboard/agent/individual", icon: UserCheck },
     { label: "Новости", href: "/dashboard/agent/news", icon: Newspaper },
-    { label: "Чат", href: "/dashboard/agent/chat", icon: MessageCircle },
+    { label: "Помощь", href: "/dashboard/agent/help", icon: HelpCircle },
   ],
   client: [
     { label: "Аккредитация", href: "/dashboard/client", icon: Award },
@@ -114,7 +115,7 @@ export function Sidebar({ role }: SidebarProps) {
         <nav className="flex-1 overflow-y-auto px-3 py-2">
           <ul className="space-y-1">
             {items.map((item) => {
-              const isActive = pathname === item.href
+              const isActive = pathname === item.href || pathname?.startsWith(item.href + "/")
               return (
                 <li key={item.href}>
                   <Link

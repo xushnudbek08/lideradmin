@@ -25,7 +25,7 @@ export default function AgentDashboardLayout({
 
       {/* Main content */}
       <div className="lg:pl-64">
-        <DashboardHeader title="Кабинет агента" onMenuClick={() => setIsMobileMenuOpen(true)} />
+        <DashboardHeader title="" onMenuClick={() => setIsMobileMenuOpen(true)} />
         <main className="p-4 lg:p-6">{children}</main>
       </div>
     </div>
