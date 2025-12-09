@@ -1,1 +1,4 @@
-{}
+{
+  "/dashboard/client/calculator/page": "app/dashboard/client/calculator/page.js",
+  "/dashboard/client/create-application/page": "app/dashboard/client/create-application/page.js"
+}

@@ -1,136 +1,165 @@
-import { Trophy, Calendar, Building2, ArrowRight } from "lucide-react"
+"use client"
+
+import { useState, useEffect } from "react"
+import { Trophy, Plus, Loader2, Search } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-
-const wins = [
-  {
-    id: 1,
-    tender: "Поставка оборудования для школ",
-    customer: "Министерство образования",
-    amount: "15 000 000 ₽",
-    date: "10.01.2025",
-    status: "Контракт подписан",
-  },
-  {
-    id: 2,
-    tender: "Строительство детской площадки",
-    customer: "Администрация г. Москвы",
-    amount: "8 500 000 ₽",
-    date: "05.01.2025",
-    status: "Контракт подписан",
-  },
-  {
-    id: 3,
-    tender: "IT-обслуживание",
-    customer: "ПАО Газпром",
-    amount: "25 000 000 ₽",
-    date: "28.12.2024",
-    status: "Исполнение",
-  },
-  {
-    id: 4,
-    tender: "Поставка канцелярии",
-    customer: "Администрация Московской области",
-    amount: "3 200 000 ₽",
-    date: "20.12.2024",
-    status: "Завершён",
-  },
-]
-
-const statusColors: Record<string, string> = {
-  "Контракт подписан": "bg-green-500/10 text-green-500 border-green-500/20",
-  Исполнение: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  Завершён: "bg-gray-500/10 text-gray-400 border-gray-500/20",
-}
+import { Input } from "@/components/ui/input"
+import { applicationsApi } from "@/lib/api"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export default function ClientWinsPage() {
-  const totalAmount = wins.reduce((sum, win) => {
-    const amount = Number.parseInt(win.amount.replace(/[^\d]/g, ""))
-    return sum + amount
-  }, 0)
+  const [wins, setWins] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+  const router = useRouter()
+
+  useEffect(() => {
+    const fetchWins = async () => {
+      try {
+        setLoading(true)
+        const data = await applicationsApi.getMyWins()
+        const formatted = data.map((win) => ({
+          id: win.id,
+          protocol_date: win.protocol_date || win.created_at, // Выход протокола
+          nmc: win.nmc || win.amount || null, // НМЦ, руб
+          bg_amount: win.bg_amount || win.contract_security || null, // Сумма БГ, руб
+          customer: win.customer || win.customer_name || "", // Заказчик
+          subject: win.subject || win.title || "", // Предмет закупки
+          notice_number: win.notice_number || "", // № извещения
+        }))
+        setWins(formatted)
+      } catch (error) {
+        console.error("Error fetching wins:", error)
+        toast.error("Ошибка при загрузке побед")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchWins()
+  }, [])
+
+  const filteredWins = wins.filter((win) => {
+    const searchLower = searchQuery.toLowerCase()
+    return (
+      win.customer.toLowerCase().includes(searchLower) ||
+      win.subject.toLowerCase().includes(searchLower) ||
+      win.notice_number.toLowerCase().includes(searchLower)
+    )
+  })
+
+  const formatCurrency = (value: number | null | string) => {
+    if (!value) return "—"
+    const numValue = typeof value === "string" ? parseFloat(value) : value
+    if (isNaN(numValue)) return "—"
+    return `${numValue.toLocaleString("ru-RU")} ₽`
+  }
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "—"
+    try {
+      return new Date(dateString).toLocaleDateString("ru-RU")
+    } catch {
+      return "—"
+    }
+  }
+
+  const handleCreateApplication = (win: any) => {
+    // Переход на создание заявки с предзаполненными данными
+    router.push(`/dashboard/client/create-application?win=${win.id}`)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="bg-card border-border">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                <Trophy className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-muted-foreground text-sm">Всего побед</p>
-                <p className="text-2xl font-bold text-foreground">{wins.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-card border-border">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-green-500" />
-              </div>
-              <div>
-                <p className="text-muted-foreground text-sm">Общая сумма</p>
-                <p className="text-2xl font-bold text-foreground">{(totalAmount / 1000000).toFixed(1)}M ₽</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-card border-border">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-muted-foreground text-sm">В исполнении</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {wins.filter((w) => w.status === "Исполнение").length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Мои победы</h1>
+          <p className="text-muted-foreground mt-1">Выигранные тендеры и закупки</p>
+        </div>
       </div>
 
-      {/* Wins List */}
+      {/* Search */}
+      <Card className="bg-card border-border">
+        <CardContent className="p-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Поиск..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 bg-input border-border text-foreground h-9"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Wins Table */}
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-foreground">Выигранные тендеры</CardTitle>
+          <CardTitle className="text-foreground">Выигранные тендеры ({filteredWins.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {wins.map((win) => (
-              <div
-                key={win.id}
-                className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-secondary rounded-xl gap-4"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Trophy className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-foreground font-medium">{win.tender}</p>
-                    <p className="text-muted-foreground text-sm">{win.customer}</p>
-                    <p className="text-muted-foreground text-xs mt-1">{win.date}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 md:ml-auto">
-                  <div className="text-right">
-                    <p className="text-foreground font-semibold">{win.amount}</p>
-                    <Badge className={statusColors[win.status]}>{win.status}</Badge>
-                  </div>
-                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </div>
+          {filteredWins.length > 0 ? (
+            <div className="border border-border rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-secondary border-b border-border">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Выход протокола</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">НМЦ, руб</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Сумма БГ, руб</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Заказчик</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Предмет закупки</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filteredWins.map((win) => (
+                      <tr key={win.id} className="hover:bg-secondary/50 transition-colors">
+                        <td className="px-4 py-3 text-sm text-foreground">{formatDate(win.protocol_date)}</td>
+                        <td className="px-4 py-3 text-sm text-foreground font-medium">{formatCurrency(win.nmc)}</td>
+                        <td className="px-4 py-3 text-sm text-foreground font-medium">{formatCurrency(win.bg_amount)}</td>
+                        <td className="px-4 py-3 text-sm text-foreground">{win.customer || "—"}</td>
+                        <td className="px-4 py-3 text-sm text-foreground">{win.subject || "—"}</td>
+                        <td className="px-4 py-3">
+                          <Button
+                            onClick={() => handleCreateApplication(win)}
+                            size="sm"
+                            className="bg-primary text-primary-foreground hover:bg-primary/90"
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Создать заявку
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Trophy className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground mb-4">Побед пока нет</p>
+              <Button
+                onClick={() => router.push("/dashboard/client/create-application")}
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Создать заявку
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

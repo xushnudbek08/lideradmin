@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Calculator, Info } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 
 export default function ClientCalculatorPage() {
+  const router = useRouter()
   const [guaranteeAmount, setGuaranteeAmount] = useState(5000000)
   const [term, setTerm] = useState(12)
   const [rate] = useState(3)
@@ -97,14 +99,17 @@ export default function ClientCalculatorPage() {
               </div>
             </div>
 
-            <div className="flex items-start gap-2 p-3 bg-blue-500/10 rounded-lg">
-              <Info className="w-4 h-4 text-blue-500 mt-0.5" />
-              <p className="text-sm text-blue-500">
+            <div className="flex items-start gap-2 p-3 bg-accent/10 rounded-lg">
+              <Info className="w-4 h-4 text-accent mt-0.5" />
+              <p className="text-sm text-accent">
                 Точная стоимость зависит от условий банка и финансового состояния.
               </p>
             </div>
 
-            <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button 
+              onClick={() => router.push('/dashboard/client/create-application')}
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+            >
               Подать заявку на гарантию
             </Button>
           </CardContent>

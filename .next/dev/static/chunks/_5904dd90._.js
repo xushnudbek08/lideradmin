@@ -11,6 +11,12 @@ __turbopack_context__.s([
     ()=>banksApi,
     "companiesApi",
     ()=>companiesApi,
+    "companyContactsApi",
+    ()=>companyContactsApi,
+    "companyFoundersApi",
+    ()=>companyFoundersApi,
+    "companyManagementApi",
+    ()=>companyManagementApi,
     "documentsApi",
     ()=>documentsApi,
     "messagesApi",
@@ -250,6 +256,14 @@ const companiesApi = {
         });
         return handleResponse(response);
     },
+    getMyCompany: async ()=>{
+        const response = await fetch(`${API_BASE_URL}/companies/my_company/`, {
+            headers: {
+                ...getAuthHeaders()
+            }
+        });
+        return handleResponse(response);
+    },
     create: async (data)=>{
         const response = await fetch(`${API_BASE_URL}/companies/`, {
             method: "POST",
@@ -269,6 +283,164 @@ const companiesApi = {
                 ...getAuthHeaders()
             },
             body: JSON.stringify(data)
+        });
+        return handleResponse(response);
+    },
+    updateMyCompany: async (data)=>{
+        const response = await fetch(`${API_BASE_URL}/companies/my_company/`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify(data)
+        });
+        return handleResponse(response);
+    }
+};
+const companyManagementApi = {
+    list: async ()=>{
+        const response = await fetch(`${API_BASE_URL}/company-management/`, {
+            headers: {
+                ...getAuthHeaders()
+            }
+        });
+        return handleResponse(response);
+    },
+    get: async (id)=>{
+        const response = await fetch(`${API_BASE_URL}/company-management/${id}/`, {
+            headers: {
+                ...getAuthHeaders()
+            }
+        });
+        return handleResponse(response);
+    },
+    create: async (data)=>{
+        const response = await fetch(`${API_BASE_URL}/company-management/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify(data)
+        });
+        return handleResponse(response);
+    },
+    update: async (id, data)=>{
+        const response = await fetch(`${API_BASE_URL}/company-management/${id}/`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify(data)
+        });
+        return handleResponse(response);
+    },
+    delete: async (id)=>{
+        const response = await fetch(`${API_BASE_URL}/company-management/${id}/`, {
+            method: "DELETE",
+            headers: {
+                ...getAuthHeaders()
+            }
+        });
+        return handleResponse(response);
+    }
+};
+const companyFoundersApi = {
+    list: async ()=>{
+        const response = await fetch(`${API_BASE_URL}/company-founders/`, {
+            headers: {
+                ...getAuthHeaders()
+            }
+        });
+        return handleResponse(response);
+    },
+    get: async (id)=>{
+        const response = await fetch(`${API_BASE_URL}/company-founders/${id}/`, {
+            headers: {
+                ...getAuthHeaders()
+            }
+        });
+        return handleResponse(response);
+    },
+    create: async (data)=>{
+        const response = await fetch(`${API_BASE_URL}/company-founders/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify(data)
+        });
+        return handleResponse(response);
+    },
+    update: async (id, data)=>{
+        const response = await fetch(`${API_BASE_URL}/company-founders/${id}/`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify(data)
+        });
+        return handleResponse(response);
+    },
+    delete: async (id)=>{
+        const response = await fetch(`${API_BASE_URL}/company-founders/${id}/`, {
+            method: "DELETE",
+            headers: {
+                ...getAuthHeaders()
+            }
+        });
+        return handleResponse(response);
+    }
+};
+const companyContactsApi = {
+    list: async ()=>{
+        const response = await fetch(`${API_BASE_URL}/company-contacts/`, {
+            headers: {
+                ...getAuthHeaders()
+            }
+        });
+        return handleResponse(response);
+    },
+    get: async (id)=>{
+        const response = await fetch(`${API_BASE_URL}/company-contacts/${id}/`, {
+            headers: {
+                ...getAuthHeaders()
+            }
+        });
+        return handleResponse(response);
+    },
+    create: async (data)=>{
+        const response = await fetch(`${API_BASE_URL}/company-contacts/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify(data)
+        });
+        return handleResponse(response);
+    },
+    update: async (id, data)=>{
+        const response = await fetch(`${API_BASE_URL}/company-contacts/${id}/`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders()
+            },
+            body: JSON.stringify(data)
+        });
+        return handleResponse(response);
+    },
+    delete: async (id)=>{
+        const response = await fetch(`${API_BASE_URL}/company-contacts/${id}/`, {
+            method: "DELETE",
+            headers: {
+                ...getAuthHeaders()
+            }
         });
         return handleResponse(response);
     }

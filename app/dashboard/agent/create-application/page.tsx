@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { CalculatorWidget } from "@/components/dashboard/calculator-widget"
 import { applicationsApi, banksApi, companiesApi } from "@/lib/api"
 import { toast } from "sonner"
 import { useForm } from "react-hook-form"
@@ -92,140 +93,157 @@ export default function CreateApplicationPage() {
     }
   }
 
+  const handleCalculate = (amount: number, term: number) => {
+    setValue("amount", amount.toString())
+    toast.success("Значения применены к заявке")
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 max-w-4xl mx-auto">
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
           onClick={() => router.back()}
           className="border-border text-foreground bg-transparent"
+          size="sm"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Назад
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Создать заявку</h1>
-          <p className="text-muted-foreground mt-1">Заполните данные для создания новой заявки</p>
+          <h1 className="text-xl font-bold text-foreground">Создать заявку</h1>
+          <p className="text-sm text-muted-foreground mt-1">Заполните данные для создания новой заявки</p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-foreground">Основная информация</CardTitle>
-            <CardDescription>Укажите основные данные заявки</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="company" className="text-foreground">
-                Компания клиента *
-              </Label>
-              <Select value={selectedCompany?.toString() || ""} onValueChange={(value) => setSelectedCompany(Number(value))}>
-                <SelectTrigger className="bg-background border-border text-foreground">
-                  <SelectValue placeholder="Выберите компанию" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border">
-                  {companies.map((company) => (
-                    <SelectItem key={company.id} value={company.id.toString()}>
-                      {company.name} {company.inn ? `(ИНН: ${company.inn})` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {!selectedCompany && <p className="text-sm text-destructive">Выберите компанию клиента</p>}
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Calculator Widget */}
+        <div className="lg:col-span-1">
+          <CalculatorWidget onCalculate={handleCalculate} role="agent" />
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="title" className="text-foreground">
-                Название заявки *
-              </Label>
-              <Input
-                id="title"
-                {...register("title", { required: "Название обязательно" })}
-                className="bg-background border-border text-foreground"
-                placeholder="Например: Банковская гарантия для тендера"
-              />
-              {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="amount" className="text-foreground">
-                Сумма (₽)
-              </Label>
-              <Input
-                id="amount"
-                type="number"
-                {...register("amount")}
-                className="bg-background border-border text-foreground"
-                placeholder="5000000"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-foreground">Выберите банки</Label>
-              {loadingBanks ? (
-                <div className="flex items-center justify-center p-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        {/* Form */}
+        <div className="lg:col-span-2">
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <Card className="bg-card border-border">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg text-foreground">Основная информация</CardTitle>
+                <CardDescription className="text-sm">Укажите основные данные заявки</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="company" className="text-sm text-foreground">
+                    Компания клиента *
+                  </Label>
+                  <Select value={selectedCompany?.toString() || ""} onValueChange={(value) => setSelectedCompany(Number(value))}>
+                    <SelectTrigger className="bg-background border-border text-foreground">
+                      <SelectValue placeholder="Выберите компанию" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border">
+                      {companies.map((company) => (
+                        <SelectItem key={company.id} value={company.id.toString()}>
+                          {company.name} {company.inn ? `(ИНН: ${company.inn})` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {!selectedCompany && <p className="text-xs text-destructive">Выберите компанию клиента</p>}
                 </div>
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 border border-border rounded-lg bg-background">
-                  {banks.map((bank) => (
-                    <label
-                      key={bank.id}
-                      className="flex items-center gap-2 p-2 rounded border border-border cursor-pointer hover:bg-secondary transition-colors"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedBanks?.includes(bank.id) || false}
-                        onChange={() => toggleBank(bank.id)}
-                        className="rounded border-border"
-                      />
-                      <span className="text-sm text-foreground">{bank.name}</span>
-                    </label>
-                  ))}
+
+                <div className="space-y-2">
+                  <Label htmlFor="title" className="text-sm text-foreground">
+                    Название заявки *
+                  </Label>
+                  <Input
+                    id="title"
+                    {...register("title", { required: "Название обязательно" })}
+                    className="bg-background border-border text-foreground"
+                    placeholder="Например: Банковская гарантия для тендера"
+                  />
+                  {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
                 </div>
-              )}
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes" className="text-foreground">
-                Примечания
-              </Label>
-              <Textarea
-                id="notes"
-                {...register("notes")}
-                className="bg-background border-border text-foreground"
-                placeholder="Дополнительная информация..."
-                rows={4}
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="amount" className="text-sm text-foreground">
+                    Сумма (₽)
+                  </Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    {...register("amount")}
+                    className="bg-background border-border text-foreground"
+                    placeholder="5000000"
+                  />
+                </div>
 
-            <div className="flex justify-end gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.back()}
-                className="border-border text-foreground bg-transparent"
-              >
-                Отмена
-              </Button>
-              <Button type="submit" disabled={isLoading} className="bg-primary text-primary-foreground">
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Создание...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    Создать заявку
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </form>
+                <div className="space-y-2">
+                  <Label className="text-sm text-foreground">Выберите банки</Label>
+                  {loadingBanks ? (
+                    <div className="flex items-center justify-center p-6">
+                      <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 border border-border rounded-lg bg-background max-h-48 overflow-y-auto">
+                      {banks.map((bank) => (
+                        <label
+                          key={bank.id}
+                          className="flex items-center gap-2 p-2 rounded border border-border cursor-pointer hover:bg-secondary transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedBanks?.includes(bank.id) || false}
+                            onChange={() => toggleBank(bank.id)}
+                            className="rounded border-border"
+                          />
+                          <span className="text-xs text-foreground">{bank.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="notes" className="text-sm text-foreground">
+                    Примечания
+                  </Label>
+                  <Textarea
+                    id="notes"
+                    {...register("notes")}
+                    className="bg-background border-border text-foreground"
+                    placeholder="Дополнительная информация..."
+                    rows={3}
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => router.back()}
+                    className="border-border text-foreground bg-transparent"
+                    size="sm"
+                  >
+                    Отмена
+                  </Button>
+                  <Button type="submit" disabled={isLoading} className="bg-primary text-primary-foreground" size="sm">
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Создание...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        Создать заявку
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </form>
+        </div>
+      </div>
     </div>
   )
 }

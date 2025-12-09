@@ -1,11 +1,15 @@
 "use client"
 
-import { useState } from "react"
-import { FileText, Upload, Download, Trash2, Eye, Search, FolderOpen } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { FileText, Upload, Download, RefreshCw, Search, FolderOpen, Loader2, X } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { documentsApi } from "@/lib/api"
+import { toast } from "sonner"
 
 const documents = [
   {
@@ -61,21 +65,134 @@ const statusColors: Record<string, string> = {
   "Требует обновления": "bg-red-500/10 text-red-500 border-red-500/20",
 }
 
+const docTypeLabels: Record<string, string> = {
+  statute: "Учредительные документы",
+  accounting: "Финансовые документы",
+  other: "Другое",
+}
+
 export default function ClientDocumentsPage() {
   const [searchQuery, setSearchQuery] = useState("")
+  const [documentsList, setDocumentsList] = useState(documents)
+  const [isUploading, setIsUploading] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [docType, setDocType] = useState<string>("other")
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const filteredDocs = documents.filter(
+  const filteredDocs = documentsList.filter(
     (doc) =>
       doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.category.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
+  const handleFileSelect = (files: FileList | null) => {
+    if (!files || files.length === 0) return
+
+    const validFiles: File[] = []
+    const maxSize = 10 * 1024 * 1024 // 10 MB
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "image/jpeg",
+      "image/png",
+    ]
+
+    Array.from(files).forEach((file) => {
+      if (file.size > maxSize) {
+        toast.error(`Файл ${file.name} превышает размер 10 MB`)
+        return
+      }
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(`Файл ${file.name} имеет недопустимый формат`)
+        return
+      }
+      validFiles.push(file)
+    })
+
+    if (validFiles.length > 0) {
+      setSelectedFiles((prev) => [...prev, ...validFiles])
+    }
+  }
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFileSelect(e.target.files)
+  }
+
+  const handleButtonClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    handleFileSelect(e.dataTransfer.files)
+  }
+
+  const removeFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const handleUpload = async () => {
+    if (selectedFiles.length === 0) {
+      toast.error("Выберите файлы для загрузки")
+      return
+    }
+
+    if (!docType) {
+      toast.error("Выберите тип документа")
+      return
+    }
+
+    setIsUploading(true)
+    try {
+      for (const file of selectedFiles) {
+        await documentsApi.upload(file, docType)
+      }
+      toast.success(`Успешно загружено файлов: ${selectedFiles.length}`)
+      setSelectedFiles([])
+      // Здесь можно обновить список документов, если есть API для получения списка
+      // const updatedDocs = await documentsApi.list()
+      // setDocumentsList(updatedDocs)
+    } catch (error: any) {
+      toast.error(error.message || "Ошибка при загрузке документов")
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return "0 Bytes"
+    const k = 1024
+    const sizes = ["Bytes", "KB", "MB", "GB"]
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i]
+  }
+
   return (
     <div className="space-y-6">
       {/* Upload Area */}
-      <Card className="bg-card border-border border-dashed">
+      <Card className={`bg-card border-border border-dashed ${isDragging ? "border-primary bg-primary/5" : ""}`}>
         <CardContent className="p-8">
-          <div className="flex flex-col items-center justify-center text-center">
+          <div
+            className="flex flex-col items-center justify-center text-center"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
             <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
               <Upload className="w-8 h-8 text-primary" />
             </div>
@@ -85,10 +202,87 @@ export default function ClientDocumentsPage() {
               <br />
               <span className="text-xs">PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (до 10 MB)</span>
             </p>
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-              <Upload className="w-4 h-4 mr-2" />
-              Выбрать файлы
-            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+              onChange={handleFileInputChange}
+              className="hidden"
+            />
+            <div className="flex flex-col gap-4 w-full max-w-md">
+              <div className="space-y-2">
+                <Label className="text-foreground">Тип документа</Label>
+                <Select value={docType} onValueChange={setDocType}>
+                  <SelectTrigger className="bg-background border-border text-foreground">
+                    <SelectValue placeholder="Выберите тип документа" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border">
+                    <SelectItem value="statute">Учредительные документы</SelectItem>
+                    <SelectItem value="accounting">Финансовые документы</SelectItem>
+                    <SelectItem value="other">Другое</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                type="button"
+                onClick={handleButtonClick}
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Выбрать файлы
+              </Button>
+            </div>
+
+            {/* Selected Files */}
+            {selectedFiles.length > 0 && (
+              <div className="w-full max-w-md mt-6 space-y-2">
+                <Label className="text-foreground">Выбранные файлы:</Label>
+                <div className="space-y-2">
+                  {selectedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-secondary rounded-lg border border-border"
+                    >
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <FileText className="w-4 h-4 text-primary flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-foreground truncate">{file.name}</p>
+                          <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeFile(index)}
+                        className="flex-shrink-0 text-muted-foreground hover:text-destructive"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <Button
+                  type="button"
+                  onClick={handleUpload}
+                  disabled={isUploading || !docType}
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Загрузка...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Загрузить файлы ({selectedFiles.length})
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -97,12 +291,12 @@ export default function ClientDocumentsPage() {
       <Card className="bg-card border-border">
         <CardContent className="p-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <Input
               placeholder="Поиск документов..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-input border-border text-foreground"
+              className="pl-9 bg-input border-border text-foreground h-9"
             />
           </div>
         </CardContent>
@@ -138,13 +332,10 @@ export default function ClientDocumentsPage() {
                   <Badge className={statusColors[doc.status]}>{doc.status}</Badge>
                   <div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
                       <Download className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
-                      <Trash2 className="w-4 h-4" />
+                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
+                      <RefreshCw className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
