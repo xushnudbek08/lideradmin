@@ -171,7 +171,6 @@
     --color-yellow-600: #cd8900;
     --color-green-500: #00c758;
     --color-green-600: #00a544;
-    --color-blue-500: #3080ff;
     --color-purple-500: #ac4bff;
     --color-gray-500: #6a7282;
     --color-black: #000;
@@ -183,6 +182,7 @@
     --container-2xl: 42rem;
     --container-3xl: 48rem;
     --container-4xl: 56rem;
+    --container-6xl: 72rem;
     --text-xs: .75rem;
     --text-xs--line-height: calc(1 / .75);
     --text-sm: .875rem;
@@ -240,7 +240,6 @@
       --color-yellow-600: lab(62.7799% 22.4197 86.1544);
       --color-green-500: lab(70.5521% -66.5147 45.8073);
       --color-green-600: lab(59.0978% -58.6621 41.2579);
-      --color-blue-500: lab(54.1736% 13.3369 -74.6839);
       --color-purple-500: lab(52.0183% 66.11 -78.2316);
       --color-gray-500: lab(47.7841% -.393182 -10.0268);
     }
@@ -1309,6 +1308,10 @@
     max-width: var(--container-4xl);
   }
 
+  .max-w-6xl {
+    max-width: var(--container-6xl);
+  }
+
   .max-w-\[70\%\] {
     max-width: 70%;
   }
@@ -1891,16 +1894,6 @@
     }
   }
 
-  .border-blue-500\/20 {
-    border-color: #3080ff33;
-  }
-
-  @supports (color: color-mix(in lab, red, red)) {
-    .border-blue-500\/20 {
-      border-color: color-mix(in oklab, var(--color-blue-500) 20%, transparent);
-    }
-  }
-
   .border-border {
     border-color: var(--border);
   }
@@ -2041,16 +2034,6 @@
     }
   }
 
-  .bg-accent\/20 {
-    background-color: var(--accent);
-  }
-
-  @supports (color: color-mix(in lab, red, red)) {
-    .bg-accent\/20 {
-      background-color: color-mix(in oklab, var(--accent) 20%, transparent);
-    }
-  }
-
   .bg-background {
     background-color: var(--background);
   }
@@ -2072,16 +2055,6 @@
   @supports (color: color-mix(in lab, red, red)) {
     .bg-black\/50 {
       background-color: color-mix(in oklab, var(--color-black) 50%, transparent);
-    }
-  }
-
-  .bg-blue-500\/10 {
-    background-color: #3080ff1a;
-  }
-
-  @supports (color: color-mix(in lab, red, red)) {
-    .bg-blue-500\/10 {
-      background-color: color-mix(in oklab, var(--color-blue-500) 10%, transparent);
     }
   }
 
@@ -2636,22 +2609,8 @@
     color: var(--accent-foreground);
   }
 
-  .text-accent\/80 {
-    color: var(--accent);
-  }
-
-  @supports (color: color-mix(in lab, red, red)) {
-    .text-accent\/80 {
-      color: color-mix(in oklab, var(--accent) 80%, transparent);
-    }
-  }
-
   .text-background {
     color: var(--background);
-  }
-
-  .text-blue-500 {
-    color: var(--color-blue-500);
   }
 
   .text-card-foreground {
@@ -2714,6 +2673,16 @@
 
   .text-primary-foreground {
     color: var(--primary-foreground);
+  }
+
+  .text-primary\/80 {
+    color: var(--primary);
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .text-primary\/80 {
+      color: color-mix(in oklab, var(--primary) 80%, transparent);
+    }
   }
 
   .text-purple-500 {
@@ -6127,33 +6096,33 @@
   --card-foreground: #fff;
   --popover: #0f2847;
   --popover-foreground: #fff;
-  --primary: #ff521d;
-  --primary-foreground: #fff;
-  --secondary: #1a3a5c;
+  --primary: #3ce8d1;
+  --primary-foreground: #0b1d3a;
+  --secondary: #ff521d;
   --secondary-foreground: #fff;
   --muted: #1a3a5c;
   --muted-foreground: #94a3b8;
-  --accent: #3ce8d1;
-  --accent-foreground: #0b1d3a;
+  --accent: #ff521d;
+  --accent-foreground: #fff;
   --destructive: #e03e9d;
   --destructive-foreground: #fff;
   --border: #1e4976;
   --input: #1a3a5c;
-  --ring: #ff521d;
-  --chart-1: #ff521d;
-  --chart-2: #3ce8d1;
+  --ring: #3ce8d1;
+  --chart-1: #3ce8d1;
+  --chart-2: #ff521d;
   --chart-3: #ffd93d;
   --chart-4: #e03e9d;
   --chart-5: #3ce8d1;
   --radius: .625rem;
   --sidebar: #071428;
   --sidebar-foreground: #fff;
-  --sidebar-primary: #ff521d;
-  --sidebar-primary-foreground: #fff;
+  --sidebar-primary: #3ce8d1;
+  --sidebar-primary-foreground: #0b1d3a;
   --sidebar-accent: #1a3a5c;
   --sidebar-accent-foreground: #fff;
   --sidebar-border: #1e4976;
-  --sidebar-ring: #ff521d;
+  --sidebar-ring: #3ce8d1;
 }
 
 @property --tw-translate-x {

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Building2, Loader2, Save, FileText, CreditCard, Users, User, Briefcase, FileCheck, Phone } from "lucide-react"
+import { Building2, Loader2, Save, FileText, CreditCard, Users, User, Briefcase, FileCheck, Phone, Plus, Trash2, Edit2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,22 +9,43 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/lib/auth-context"
-import { companiesApi } from "@/lib/api"
+import { 
+  companiesApi, 
+  companyManagementApi, 
+  companyFoundersApi, 
+  companyContactsApi,
+  type MyCompany,
+  type CompanyManagement,
+  type CompanyFounder,
+  type CompanyContact
+} from "@/lib/api"
 import { toast } from "sonner"
 import { useForm } from "react-hook-form"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function ClientCompanyPage() {
   const { user } = useAuth()
-  const [company, setCompany] = useState<any>(null)
+  const [company, setCompany] = useState<MyCompany | null>(null)
+  const [management, setManagement] = useState<CompanyManagement[]>([])
+  const [founders, setFounders] = useState<CompanyFounder[]>([])
+  const [contacts, setContacts] = useState<CompanyContact[]>([])
   const [loading, setLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [activeTab, setActiveTab] = useState("general")
+  const [editingManagement, setEditingManagement] = useState<number | null>(null)
+  const [editingFounder, setEditingFounder] = useState<number | null>(null)
+  const [editingContact, setEditingContact] = useState<number | null>(null)
+  const [showManagementForm, setShowManagementForm] = useState(false)
+  const [showFounderForm, setShowFounderForm] = useState(false)
+  const [showContactForm, setShowContactForm] = useState(false)
 
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
+    watch,
+    setValue,
   } = useForm({
     defaultValues: {
       // Общая информация
@@ -40,99 +61,117 @@ export default function ClientCompanyPage() {
       inn: "",
       kpp: "",
       ogrn: "",
-      ogrn_date: "",
       registration_date: "",
       registration_authority: "",
+      registration_number: "",
+      registration_certificate: "",
       
       // Деятельность и лицензии
       okved: "",
-      okved_description: "",
+      activity_type: "",
       licenses: "",
-      
-      // Руководство
-      director_name: "",
-      director_position: "",
-      director_inn: "",
-      director_phone: "",
-      director_email: "",
-      
-      // Учредители
-      founders: "",
       
       // Банк. реквизиты
       bank_name: "",
       bank_account: "",
       bank_bik: "",
-      bank_ks: "",
-      bank_inn: "",
-      bank_kpp: "",
+      correspondent_account: "",
       
       // Реквизиты счетов ЭТП
       etp_accounts: "",
-      
-      // Контактные лица
-      contact_person_1_name: "",
-      contact_person_1_position: "",
-      contact_person_1_phone: "",
-      contact_person_1_email: "",
-      contact_person_2_name: "",
-      contact_person_2_position: "",
-      contact_person_2_phone: "",
-      contact_person_2_email: "",
+    },
+  })
+
+  // Forms for management, founders, contacts
+  const managementForm = useForm<Omit<CompanyManagement, "id">>({
+    defaultValues: {
+      position: "",
+      full_name: "",
+      phone: "",
+      email: "",
+      passport_series: "",
+      passport_number: "",
+      passport_issued_by: "",
+      passport_issued_date: "",
+      inn: "",
+    },
+  })
+
+  const founderForm = useForm<Omit<CompanyFounder, "id">>({
+    defaultValues: {
+      founder_type: "individual",
+      full_name: "",
+      company_name: "",
+      inn: "",
+      share_percentage: 0,
+      share_amount: 0,
+      passport_series: "",
+      passport_number: "",
+      passport_issued_by: "",
+      passport_issued_date: "",
+      address: "",
+    },
+  })
+
+  const contactForm = useForm<Omit<CompanyContact, "id">>({
+    defaultValues: {
+      full_name: "",
+      position: "",
+      phone: "",
+      email: "",
+      is_main_contact: false,
     },
   })
 
   useEffect(() => {
-    const fetchCompany = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true)
-        if (user?.company) {
-          const companyData = await companiesApi.get(user.company)
+        const [companyData, managementData, foundersData, contactsData] = await Promise.all([
+          companiesApi.getMyCompany().catch(() => null),
+          companyManagementApi.list().catch(() => []),
+          companyFoundersApi.list().catch(() => []),
+          companyContactsApi.list().catch(() => []),
+        ])
+        
+        // Validate and set data
+        const management = Array.isArray(managementData) ? managementData : []
+        const founders = Array.isArray(foundersData) ? foundersData : []
+        const contacts = Array.isArray(contactsData) ? contactsData : []
+
+        if (companyData) {
           setCompany(companyData)
-          // Заполняем форму данными компании
-          const requisites = companyData.requisites as any || {}
           reset({
             name: companyData.name || "",
-            short_name: requisites.short_name || "",
-            legal_address: companyData.address || "",
-            actual_address: requisites.actual_address || "",
-            phone: requisites.phone || "",
-            email: requisites.email || "",
-            website: requisites.website || "",
+            short_name: companyData.short_name || "",
+            legal_address: companyData.legal_address || companyData.address || "",
+            actual_address: companyData.actual_address || "",
+            phone: companyData.phone || "",
+            email: companyData.email || "",
+            website: companyData.website || "",
             inn: companyData.inn || "",
-            kpp: requisites.kpp || "",
-            ogrn: requisites.ogrn || "",
-            ogrn_date: requisites.ogrn_date || "",
-            registration_date: requisites.registration_date || "",
-            registration_authority: requisites.registration_authority || "",
-            okved: requisites.okved || "",
-            okved_description: requisites.okved_description || "",
-            licenses: requisites.licenses || "",
-            director_name: requisites.director_name || "",
-            director_position: requisites.director_position || "",
-            director_inn: requisites.director_inn || "",
-            director_phone: requisites.director_phone || "",
-            director_email: requisites.director_email || "",
-            founders: requisites.founders || "",
-            bank_name: requisites.bank_name || "",
-            bank_account: requisites.bank_account || "",
-            bank_bik: requisites.bank_bik || "",
-            bank_ks: requisites.bank_ks || "",
-            bank_inn: requisites.bank_inn || "",
-            bank_kpp: requisites.bank_kpp || "",
-            etp_accounts: requisites.etp_accounts || "",
-            contact_person_1_name: requisites.contact_person_1_name || "",
-            contact_person_1_position: requisites.contact_person_1_position || "",
-            contact_person_1_phone: requisites.contact_person_1_phone || "",
-            contact_person_1_email: requisites.contact_person_1_email || "",
-            contact_person_2_name: requisites.contact_person_2_name || "",
-            contact_person_2_position: requisites.contact_person_2_position || "",
-            contact_person_2_phone: requisites.contact_person_2_phone || "",
-            contact_person_2_email: requisites.contact_person_2_email || "",
+            kpp: companyData.kpp || "",
+            ogrn: companyData.ogrn || "",
+            registration_date: companyData.registration_date || "",
+            registration_authority: companyData.registration_authority || "",
+            registration_number: companyData.registration_number || "",
+            registration_certificate: companyData.registration_certificate || "",
+            okved: companyData.okved || "",
+            activity_type: companyData.activity_type || "",
+            licenses: companyData.licenses ? JSON.stringify(companyData.licenses, null, 2) : "",
+            bank_name: companyData.bank_name || "",
+            bank_account: companyData.bank_account || "",
+            bank_bik: companyData.bank_bik || "",
+            correspondent_account: companyData.correspondent_account || "",
+            etp_accounts: companyData.etp_accounts ? JSON.stringify(companyData.etp_accounts, null, 2) : "",
           })
         }
+
+        setManagement(management)
+        setFounders(founders)
+        setContacts(contacts)
       } catch (error: any) {
-        console.error("Error fetching company:", error)
+        console.error("Error fetching data:", error)
         toast.error("Ошибка при загрузке данных компании")
       } finally {
         setLoading(false)
@@ -140,60 +179,64 @@ export default function ClientCompanyPage() {
     }
 
     if (user) {
-      fetchCompany()
+      fetchData()
     }
   }, [user, reset])
 
   const onSubmit = async (data: any) => {
-    if (!user?.company) {
+    if (!company) {
       toast.error("Компания не найдена")
       return
     }
 
     setIsSaving(true)
     try {
-      const requisites = {
-        short_name: data.short_name,
-        actual_address: data.actual_address,
-        phone: data.phone,
-        email: data.email,
-        website: data.website,
-        kpp: data.kpp,
-        ogrn: data.ogrn,
-        ogrn_date: data.ogrn_date,
-        registration_date: data.registration_date,
-        registration_authority: data.registration_authority,
-        okved: data.okved,
-        okved_description: data.okved_description,
-        licenses: data.licenses,
-        director_name: data.director_name,
-        director_position: data.director_position,
-        director_inn: data.director_inn,
-        director_phone: data.director_phone,
-        director_email: data.director_email,
-        founders: data.founders,
-        bank_name: data.bank_name,
-        bank_account: data.bank_account,
-        bank_bik: data.bank_bik,
-        bank_ks: data.bank_ks,
-        bank_inn: data.bank_inn,
-        bank_kpp: data.bank_kpp,
-        etp_accounts: data.etp_accounts,
-        contact_person_1_name: data.contact_person_1_name,
-        contact_person_1_position: data.contact_person_1_position,
-        contact_person_1_phone: data.contact_person_1_phone,
-        contact_person_1_email: data.contact_person_1_email,
-        contact_person_2_name: data.contact_person_2_name,
-        contact_person_2_position: data.contact_person_2_position,
-        contact_person_2_phone: data.contact_person_2_phone,
-        contact_person_2_email: data.contact_person_2_email,
+      let licenses = null
+      let etp_accounts = null
+
+      try {
+        if (data.licenses) {
+          licenses = JSON.parse(data.licenses)
+        }
+      } catch {
+        toast.error("Ошибка в формате JSON для лицензий")
+        setIsSaving(false)
+        return
       }
 
-      const updated = await companiesApi.update(user.company, {
+      try {
+        if (data.etp_accounts) {
+          etp_accounts = JSON.parse(data.etp_accounts)
+        }
+      } catch {
+        toast.error("Ошибка в формате JSON для реквизитов ЭТП")
+        setIsSaving(false)
+        return
+      }
+
+      const updated = await companiesApi.updateMyCompany({
         name: data.name,
+        short_name: data.short_name || null,
+        legal_address: data.legal_address || null,
+        actual_address: data.actual_address || null,
+        phone: data.phone || null,
+        email: data.email || null,
+        website: data.website || null,
         inn: data.inn || null,
-        address: data.legal_address,
-        requisites: requisites,
+        kpp: data.kpp || null,
+        ogrn: data.ogrn || null,
+        registration_date: data.registration_date || null,
+        registration_authority: data.registration_authority || null,
+        registration_number: data.registration_number || null,
+        registration_certificate: data.registration_certificate || null,
+        okved: data.okved || null,
+        activity_type: data.activity_type || null,
+        licenses: licenses,
+        bank_name: data.bank_name || null,
+        bank_account: data.bank_account || null,
+        bank_bik: data.bank_bik || null,
+        correspondent_account: data.correspondent_account || null,
+        etp_accounts: etp_accounts,
       })
       
       if (updated) {
@@ -207,6 +250,147 @@ export default function ClientCompanyPage() {
     }
   }
 
+  const handleSaveManagement = async (data: Omit<CompanyManagement, "id">) => {
+    try {
+      if (editingManagement) {
+        await companyManagementApi.update(editingManagement, data)
+        toast.success("Руководитель обновлен")
+      } else {
+        await companyManagementApi.create(data)
+        toast.success("Руководитель добавлен")
+      }
+      const updated = await companyManagementApi.list()
+      setManagement(updated)
+      setShowManagementForm(false)
+      setEditingManagement(null)
+      managementForm.reset()
+    } catch (error: any) {
+      toast.error(error.message || "Ошибка при сохранении")
+    }
+  }
+
+  const handleDeleteManagement = async (id: number) => {
+    if (!confirm("Удалить руководителя?")) return
+    try {
+      await companyManagementApi.delete(id)
+      toast.success("Руководитель удален")
+      const updated = await companyManagementApi.list()
+      setManagement(updated)
+    } catch (error: any) {
+      toast.error(error.message || "Ошибка при удалении")
+    }
+  }
+
+  const handleEditManagement = (item: CompanyManagement) => {
+    setEditingManagement(item.id)
+    managementForm.reset({
+      position: item.position,
+      full_name: item.full_name,
+      phone: item.phone || "",
+      email: item.email || "",
+      passport_series: item.passport_series || "",
+      passport_number: item.passport_number || "",
+      passport_issued_by: item.passport_issued_by || "",
+      passport_issued_date: item.passport_issued_date || "",
+      inn: item.inn || "",
+    })
+    setShowManagementForm(true)
+  }
+
+  const handleSaveFounder = async (data: Omit<CompanyFounder, "id">) => {
+    try {
+      if (editingFounder) {
+        await companyFoundersApi.update(editingFounder, data)
+        toast.success("Учредитель обновлен")
+      } else {
+        await companyFoundersApi.create(data)
+        toast.success("Учредитель добавлен")
+      }
+      const updated = await companyFoundersApi.list()
+      setFounders(updated)
+      setShowFounderForm(false)
+      setEditingFounder(null)
+      founderForm.reset()
+    } catch (error: any) {
+      toast.error(error.message || "Ошибка при сохранении")
+    }
+  }
+
+  const handleDeleteFounder = async (id: number) => {
+    if (!confirm("Удалить учредителя?")) return
+    try {
+      await companyFoundersApi.delete(id)
+      toast.success("Учредитель удален")
+      const updated = await companyFoundersApi.list()
+      setFounders(updated)
+    } catch (error: any) {
+      toast.error(error.message || "Ошибка при удалении")
+    }
+  }
+
+  const handleEditFounder = (item: CompanyFounder) => {
+    setEditingFounder(item.id)
+    founderForm.reset({
+      founder_type: item.founder_type,
+      full_name: item.full_name || "",
+      company_name: item.company_name || "",
+      inn: item.inn || "",
+      share_percentage: item.share_percentage || 0,
+      share_amount: item.share_amount || 0,
+      passport_series: item.passport_series || "",
+      passport_number: item.passport_number || "",
+      passport_issued_by: item.passport_issued_by || "",
+      passport_issued_date: item.passport_issued_date || "",
+      address: item.address || "",
+    })
+    setShowFounderForm(true)
+  }
+
+  const handleSaveContact = async (data: Omit<CompanyContact, "id">) => {
+    try {
+      if (editingContact) {
+        await companyContactsApi.update(editingContact, data)
+        toast.success("Контактное лицо обновлено")
+      } else {
+        await companyContactsApi.create(data)
+        toast.success("Контактное лицо добавлено")
+      }
+      const updated = await companyContactsApi.list()
+      setContacts(updated)
+      setShowContactForm(false)
+      setEditingContact(null)
+      contactForm.reset()
+    } catch (error: any) {
+      toast.error(error.message || "Ошибка при сохранении")
+    }
+  }
+
+  const handleDeleteContact = async (id: number) => {
+    if (!confirm("Удалить контактное лицо?")) return
+    try {
+      await companyContactsApi.delete(id)
+      toast.success("Контактное лицо удалено")
+      const updated = await companyContactsApi.list()
+      setContacts(updated)
+    } catch (error: any) {
+      toast.error(error.message || "Ошибка при удалении")
+    }
+  }
+
+  const handleEditContact = (item: CompanyContact) => {
+    setEditingContact(item.id)
+    contactForm.reset({
+      full_name: item.full_name,
+      position: item.position,
+      phone: item.phone,
+      email: item.email,
+      is_main_contact: item.is_main_contact || false,
+    })
+    setShowContactForm(true)
+  }
+
+  const founderType = founderForm.watch("founder_type")
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -215,7 +399,7 @@ export default function ClientCompanyPage() {
     )
   }
 
-  if (!user?.company) {
+  if (!company) {
     return (
       <div className="space-y-6">
         <Card className="bg-card border-border">
@@ -223,25 +407,6 @@ export default function ClientCompanyPage() {
             <Building2 className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-lg font-semibold text-foreground mb-2">Компания не найдена</h3>
             <p className="text-muted-foreground mb-4">У вас нет привязанной компании</p>
-            <Button
-              onClick={async () => {
-                try {
-                  const newCompany = await companiesApi.create({
-                    name: "",
-                    inn: null,
-                    address: "",
-                    requisites: null,
-                  })
-                  toast.success("Компания создана")
-                  window.location.reload()
-                } catch (error: any) {
-                  toast.error(error.message || "Ошибка при создании компании")
-                }
-              }}
-              className="bg-primary text-primary-foreground"
-            >
-              Создать компанию
-            </Button>
           </CardContent>
         </Card>
       </div>
@@ -391,13 +556,6 @@ export default function ClientCompanyPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="ogrn_date" className="text-foreground">
-                      Дата присвоения ОГРН
-                    </Label>
-                    <Input id="ogrn_date" type="date" {...register("ogrn_date")} className="bg-background border-border text-foreground" />
-                  </div>
-
-                  <div className="space-y-2">
                     <Label htmlFor="registration_date" className="text-foreground">
                       Дата регистрации
                     </Label>
@@ -409,6 +567,20 @@ export default function ClientCompanyPage() {
                       Орган регистрации
                     </Label>
                     <Input id="registration_authority" {...register("registration_authority")} className="bg-background border-border text-foreground" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="registration_number" className="text-foreground">
+                      Номер регистрации
+                    </Label>
+                    <Input id="registration_number" {...register("registration_number")} className="bg-background border-border text-foreground" />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="registration_certificate" className="text-foreground">
+                      Свидетельство о регистрации
+                    </Label>
+                    <Input id="registration_certificate" {...register("registration_certificate")} className="bg-background border-border text-foreground" />
                   </div>
                 </div>
               </TabsContent>
@@ -423,96 +595,322 @@ export default function ClientCompanyPage() {
                     <Input id="okved" {...register("okved")} className="bg-background border-border text-foreground" />
                   </div>
 
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="okved_description" className="text-foreground">
-                      Описание вида деятельности
+                  <div className="space-y-2">
+                    <Label htmlFor="activity_type" className="text-foreground">
+                      Тип деятельности
                     </Label>
-                    <Textarea
-                      id="okved_description"
-                      {...register("okved_description")}
-                      className="bg-background border-border text-foreground"
-                      rows={3}
-                    />
+                    <Input id="activity_type" {...register("activity_type")} className="bg-background border-border text-foreground" />
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="licenses" className="text-foreground">
-                      Лицензии
+                      Лицензии (JSON)
                     </Label>
                     <Textarea
                       id="licenses"
                       {...register("licenses")}
-                      className="bg-background border-border text-foreground"
-                      rows={4}
-                      placeholder="Укажите имеющиеся лицензии..."
+                      className="bg-background border-border text-foreground font-mono text-sm"
+                      rows={8}
+                      placeholder='[{"license_number": "12345", "license_type": "Лицензия на строительство", "issued_date": "2020-01-01", "expiry_date": "2025-01-01", "issued_by": "Ростехнадзор"}]'
                     />
+                    <p className="text-xs text-muted-foreground">Формат: JSON массив объектов</p>
                   </div>
                 </div>
               </TabsContent>
 
               {/* 4. Руководство */}
               <TabsContent value="management" className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="director_name" className="text-foreground">
-                      ФИО руководителя *
-                    </Label>
-                    <Input
-                      id="director_name"
-                      {...register("director_name", { required: "Обязательное поле" })}
-                      className="bg-background border-border text-foreground"
-                    />
-                    {errors.director_name && <p className="text-sm text-destructive">{errors.director_name.message}</p>}
-                  </div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-foreground">Руководство компании</h3>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setShowManagementForm(true)
+                      setEditingManagement(null)
+                      managementForm.reset()
+                    }}
+                    className="bg-primary text-primary-foreground"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Добавить руководителя
+                  </Button>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="director_position" className="text-foreground">
-                      Должность *
-                    </Label>
-                    <Input
-                      id="director_position"
-                      {...register("director_position", { required: "Обязательное поле" })}
-                      className="bg-background border-border text-foreground"
-                    />
-                    {errors.director_position && <p className="text-sm text-destructive">{errors.director_position.message}</p>}
-                  </div>
+                {showManagementForm && (
+                  <Card className="bg-card border-border mb-4">
+                    <CardContent className="p-4">
+                      <form onSubmit={managementForm.handleSubmit(handleSaveManagement)} className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Должность *</Label>
+                            <Input {...managementForm.register("position", { required: true })} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>ФИО *</Label>
+                            <Input {...managementForm.register("full_name", { required: true })} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Телефон</Label>
+                            <Input {...managementForm.register("phone")} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Email</Label>
+                            <Input type="email" {...managementForm.register("email")} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>ИНН</Label>
+                            <Input {...managementForm.register("inn")} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Серия паспорта</Label>
+                            <Input {...managementForm.register("passport_series")} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Номер паспорта</Label>
+                            <Input {...managementForm.register("passport_number")} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Кем выдан</Label>
+                            <Input {...managementForm.register("passport_issued_by")} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Дата выдачи</Label>
+                            <Input type="date" {...managementForm.register("passport_issued_date")} />
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button type="submit" className="bg-primary text-primary-foreground">
+                            Сохранить
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setShowManagementForm(false)
+                              setEditingManagement(null)
+                              managementForm.reset()
+                            }}
+                          >
+                            Отмена
+                          </Button>
+                        </div>
+                      </form>
+                    </CardContent>
+                  </Card>
+                )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="director_inn" className="text-foreground">
-                      ИНН руководителя
-                    </Label>
-                    <Input id="director_inn" {...register("director_inn")} className="bg-background border-border text-foreground" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="director_phone" className="text-foreground">
-                      Телефон руководителя
-                    </Label>
-                    <Input id="director_phone" {...register("director_phone")} className="bg-background border-border text-foreground" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="director_email" className="text-foreground">
-                      Email руководителя
-                    </Label>
-                    <Input id="director_email" type="email" {...register("director_email")} className="bg-background border-border text-foreground" />
-                  </div>
+                <div className="space-y-2">
+                  {management.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">Нет данных о руководстве</p>
+                  ) : (
+                    management.map((item) => (
+                      <Card key={item.id} className="bg-card border-border">
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-foreground">{item.full_name}</h4>
+                              <p className="text-sm text-muted-foreground">{item.position}</p>
+                              {item.phone && <p className="text-sm text-muted-foreground">Тел: {item.phone}</p>}
+                              {item.email && <p className="text-sm text-muted-foreground">Email: {item.email}</p>}
+                              {item.inn && <p className="text-sm text-muted-foreground">ИНН: {item.inn}</p>}
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEditManagement(item)}
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteManagement(item.id)}
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
                 </div>
               </TabsContent>
 
               {/* 5. Учредители */}
               <TabsContent value="founders" className="space-y-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-foreground">Учредители компании</h3>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setShowFounderForm(true)
+                      setEditingFounder(null)
+                      founderForm.reset()
+                    }}
+                    className="bg-primary text-primary-foreground"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Добавить учредителя
+                  </Button>
+                </div>
+
+                {showFounderForm && (
+                  <Card className="bg-card border-border mb-4">
+                    <CardContent className="p-4">
+                      <form onSubmit={founderForm.handleSubmit(handleSaveFounder)} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Тип учредителя *</Label>
+                          <Select
+                            value={founderType}
+                            onValueChange={(value) => founderForm.setValue("founder_type", value as "individual" | "legal")}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="individual">Физическое лицо</SelectItem>
+                              <SelectItem value="legal">Юридическое лицо</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {founderType === "individual" ? (
+                          <>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label>ФИО *</Label>
+                                <Input {...founderForm.register("full_name", { required: true })} />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>ИНН</Label>
+                                <Input {...founderForm.register("inn")} />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Доля участия (%)</Label>
+                                <Input type="number" step="0.01" {...founderForm.register("share_percentage", { valueAsNumber: true })} />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Сумма доли (руб.)</Label>
+                                <Input type="number" step="0.01" {...founderForm.register("share_amount", { valueAsNumber: true })} />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Серия паспорта</Label>
+                                <Input {...founderForm.register("passport_series")} />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Номер паспорта</Label>
+                                <Input {...founderForm.register("passport_number")} />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Кем выдан</Label>
+                                <Input {...founderForm.register("passport_issued_by")} />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Дата выдачи</Label>
+                                <Input type="date" {...founderForm.register("passport_issued_date")} />
+                              </div>
+                              <div className="space-y-2 md:col-span-2">
+                                <Label>Адрес</Label>
+                                <Input {...founderForm.register("address")} />
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label>Наименование компании *</Label>
+                                <Input {...founderForm.register("company_name", { required: true })} />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>ИНН</Label>
+                                <Input {...founderForm.register("inn")} />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Доля участия (%)</Label>
+                                <Input type="number" step="0.01" {...founderForm.register("share_percentage", { valueAsNumber: true })} />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Сумма доли (руб.)</Label>
+                                <Input type="number" step="0.01" {...founderForm.register("share_amount", { valueAsNumber: true })} />
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        <div className="flex gap-2">
+                          <Button type="submit" className="bg-primary text-primary-foreground">
+                            Сохранить
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setShowFounderForm(false)
+                              setEditingFounder(null)
+                              founderForm.reset()
+                            }}
+                          >
+                            Отмена
+                          </Button>
+                        </div>
+                      </form>
+                    </CardContent>
+                  </Card>
+                )}
+
                 <div className="space-y-2">
-                  <Label htmlFor="founders" className="text-foreground">
-                    Информация об учредителях
-                  </Label>
-                  <Textarea
-                    id="founders"
-                    {...register("founders")}
-                    className="bg-background border-border text-foreground"
-                    rows={8}
-                    placeholder="Укажите информацию об учредителях: ФИО, доля участия, документы..."
-                  />
+                  {founders.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">Нет данных об учредителях</p>
+                  ) : (
+                    founders.map((item) => (
+                      <Card key={item.id} className="bg-card border-border">
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-foreground">
+                                {item.founder_type === "individual" ? item.full_name : item.company_name}
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                {item.founder_type === "individual" ? "Физическое лицо" : "Юридическое лицо"}
+                              </p>
+                              {item.inn && <p className="text-sm text-muted-foreground">ИНН: {item.inn}</p>}
+                              {item.share_percentage && (
+                                <p className="text-sm text-muted-foreground">Доля: {item.share_percentage}%</p>
+                              )}
+                              {item.share_amount && (
+                                <p className="text-sm text-muted-foreground">
+                                  Сумма: {item.share_amount.toLocaleString()} руб.
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEditFounder(item)}
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteFounder(item.id)}
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
                 </div>
               </TabsContent>
 
@@ -556,24 +954,10 @@ export default function ClientCompanyPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="bank_ks" className="text-foreground">
+                    <Label htmlFor="correspondent_account" className="text-foreground">
                       Корреспондентский счет
                     </Label>
-                    <Input id="bank_ks" {...register("bank_ks")} className="bg-background border-border text-foreground" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="bank_inn" className="text-foreground">
-                      ИНН банка
-                    </Label>
-                    <Input id="bank_inn" {...register("bank_inn")} className="bg-background border-border text-foreground" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="bank_kpp" className="text-foreground">
-                      КПП банка
-                    </Label>
-                    <Input id="bank_kpp" {...register("bank_kpp")} className="bg-background border-border text-foreground" />
+                    <Input id="correspondent_account" {...register("correspondent_account")} className="bg-background border-border text-foreground" />
                   </div>
                 </div>
               </TabsContent>
@@ -582,113 +966,132 @@ export default function ClientCompanyPage() {
               <TabsContent value="etp" className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="etp_accounts" className="text-foreground">
-                    Реквизиты счетов на электронных торговых площадках
+                    Реквизиты счетов на электронных торговых площадках (JSON)
                   </Label>
                   <Textarea
                     id="etp_accounts"
                     {...register("etp_accounts")}
-                    className="bg-background border-border text-foreground"
+                    className="bg-background border-border text-foreground font-mono text-sm"
                     rows={8}
-                    placeholder="Укажите реквизиты счетов на различных ЭТП: название площадки, номер счета, логин..."
+                    placeholder='[{"platform_name": "Сбербанк-АСТ", "account_number": "12345678901234567890", "bik": "044525225"}]'
                   />
+                  <p className="text-xs text-muted-foreground">Формат: JSON массив объектов</p>
                 </div>
               </TabsContent>
 
               {/* 8. Контактные лица */}
-              <TabsContent value="contacts" className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground mb-4">Контактное лицо 1</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="contact_person_1_name" className="text-foreground">
-                        ФИО *
-                      </Label>
-                      <Input
-                        id="contact_person_1_name"
-                        {...register("contact_person_1_name", { required: "Обязательное поле" })}
-                        className="bg-background border-border text-foreground"
-                      />
-                      {errors.contact_person_1_name && (
-                        <p className="text-sm text-destructive">{errors.contact_person_1_name.message}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="contact_person_1_position" className="text-foreground">
-                        Должность *
-                      </Label>
-                      <Input
-                        id="contact_person_1_position"
-                        {...register("contact_person_1_position", { required: "Обязательное поле" })}
-                        className="bg-background border-border text-foreground"
-                      />
-                      {errors.contact_person_1_position && (
-                        <p className="text-sm text-destructive">{errors.contact_person_1_position.message}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="contact_person_1_phone" className="text-foreground">
-                        Телефон *
-                      </Label>
-                      <Input
-                        id="contact_person_1_phone"
-                        {...register("contact_person_1_phone", { required: "Обязательное поле" })}
-                        className="bg-background border-border text-foreground"
-                      />
-                      {errors.contact_person_1_phone && (
-                        <p className="text-sm text-destructive">{errors.contact_person_1_phone.message}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="contact_person_1_email" className="text-foreground">
-                        Email *
-                      </Label>
-                      <Input
-                        id="contact_person_1_email"
-                        type="email"
-                        {...register("contact_person_1_email", { required: "Обязательное поле" })}
-                        className="bg-background border-border text-foreground"
-                      />
-                      {errors.contact_person_1_email && (
-                        <p className="text-sm text-destructive">{errors.contact_person_1_email.message}</p>
-                      )}
-                    </div>
-                  </div>
+              <TabsContent value="contacts" className="space-y-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-foreground">Контактные лица</h3>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setShowContactForm(true)
+                      setEditingContact(null)
+                      contactForm.reset()
+                    }}
+                    className="bg-primary text-primary-foreground"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Добавить контактное лицо
+                  </Button>
                 </div>
 
-                <div className="border-t border-border pt-6">
-                  <h3 className="text-lg font-semibold text-foreground mb-4">Контактное лицо 2</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="contact_person_2_name" className="text-foreground">
-                        ФИО
-                      </Label>
-                      <Input id="contact_person_2_name" {...register("contact_person_2_name")} className="bg-background border-border text-foreground" />
-                    </div>
+                {showContactForm && (
+                  <Card className="bg-card border-border mb-4">
+                    <CardContent className="p-4">
+                      <form onSubmit={contactForm.handleSubmit(handleSaveContact)} className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>ФИО *</Label>
+                            <Input {...contactForm.register("full_name", { required: true })} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Должность *</Label>
+                            <Input {...contactForm.register("position", { required: true })} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Телефон *</Label>
+                            <Input {...contactForm.register("phone", { required: true })} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Email *</Label>
+                            <Input type="email" {...contactForm.register("email", { required: true })} />
+                          </div>
+                          <div className="space-y-2 md:col-span-2">
+                            <Label className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                {...contactForm.register("is_main_contact")}
+                                className="w-4 h-4"
+                              />
+                              Основное контактное лицо
+                            </Label>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button type="submit" className="bg-primary text-primary-foreground">
+                            Сохранить
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setShowContactForm(false)
+                              setEditingContact(null)
+                              contactForm.reset()
+                            }}
+                          >
+                            Отмена
+                          </Button>
+                        </div>
+                      </form>
+                    </CardContent>
+                  </Card>
+                )}
 
-                    <div className="space-y-2">
-                      <Label htmlFor="contact_person_2_position" className="text-foreground">
-                        Должность
-                      </Label>
-                      <Input id="contact_person_2_position" {...register("contact_person_2_position")} className="bg-background border-border text-foreground" />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="contact_person_2_phone" className="text-foreground">
-                        Телефон
-                      </Label>
-                      <Input id="contact_person_2_phone" {...register("contact_person_2_phone")} className="bg-background border-border text-foreground" />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="contact_person_2_email" className="text-foreground">
-                        Email
-                      </Label>
-                      <Input id="contact_person_2_email" type="email" {...register("contact_person_2_email")} className="bg-background border-border text-foreground" />
-                    </div>
-                  </div>
+                <div className="space-y-2">
+                  {contacts.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">Нет контактных лиц</p>
+                  ) : (
+                    contacts.map((item) => (
+                      <Card key={item.id} className="bg-card border-border">
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-semibold text-foreground">{item.full_name}</h4>
+                                {item.is_main_contact && (
+                                  <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Основное</span>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground">{item.position}</p>
+                              <p className="text-sm text-muted-foreground">Тел: {item.phone}</p>
+                              <p className="text-sm text-muted-foreground">Email: {item.email}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEditContact(item)}
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteContact(item.id)}
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
                 </div>
               </TabsContent>
             </Tabs>

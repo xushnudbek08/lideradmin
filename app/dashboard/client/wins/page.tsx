@@ -20,9 +20,16 @@ export default function ClientWinsPage() {
       try {
         setLoading(true)
         const data = await applicationsApi.getMyWins()
-        const formatted = data.map((win) => ({
+        
+        // Check if data is valid
+        if (!data || !Array.isArray(data)) {
+          setWins([])
+          return
+        }
+        
+        const formatted = data.map((win: any) => ({
           id: win.id,
-          protocol_date: win.protocol_date || win.created_at, // Выход протокола
+          protocol_date: win.protocol_date || win.created_at || new Date().toISOString(), // Выход протокола
           nmc: win.nmc || win.amount || null, // НМЦ, руб
           bg_amount: win.bg_amount || win.contract_security || null, // Сумма БГ, руб
           customer: win.customer || win.customer_name || "", // Заказчик
@@ -30,9 +37,13 @@ export default function ClientWinsPage() {
           notice_number: win.notice_number || "", // № извещения
         }))
         setWins(formatted)
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching wins:", error)
-        toast.error("Ошибка при загрузке побед")
+        // Don't show error toast for 401 - redirect will happen
+        if (error.status !== 401) {
+          toast.error(error.message || "Ошибка при загрузке побед")
+        }
+        setWins([])
       } finally {
         setLoading(false)
       }

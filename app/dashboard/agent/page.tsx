@@ -9,7 +9,7 @@ import { applicationsApi } from "@/lib/api"
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-500/10 text-gray-500 border-gray-500/20",
-  submitted: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  submitted: "bg-primary/10 text-primary border-primary/20",
   under_review: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
   approved: "bg-green-500/10 text-green-500 border-green-500/20",
   rejected: "bg-red-500/10 text-red-500 border-red-500/20",
@@ -38,35 +38,45 @@ export default function AgentDashboardPage() {
       try {
         setLoading(true)
         const [applications, clients] = await Promise.all([
-          applicationsApi.getMyApplications(),
-          applicationsApi.getClients(),
+          applicationsApi.getMyApplications().catch(() => []),
+          applicationsApi.getClients().catch(() => []),
         ])
 
-        const approved = applications.filter((app) => app.status === "approved").length
-        const totalAmount = applications
-          .filter((app) => app.status === "approved" && app.amount)
-          .reduce((sum, app) => sum + parseFloat(app.amount || "0"), 0)
+        const apps = Array.isArray(applications) ? applications : []
+        const clientList = Array.isArray(clients) ? clients : []
 
-        const recent = applications
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        const approved = apps.filter((app: any) => app && app.status === "approved").length
+        const totalAmount = apps
+          .filter((app: any) => app && app.status === "approved" && app.amount)
+          .reduce((sum: number, app: any) => sum + parseFloat(app.amount || "0"), 0)
+
+        const recent = apps
+          .filter((app: any) => app && app.created_at)
+          .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
           .slice(0, 4)
-          .map((app) => ({
+          .map((app: any) => ({
             id: `ZAY-${String(app.id).padStart(3, "0")}`,
-            company: app.applicant.first_name + " " + app.applicant.last_name,
+            company: app.applicant ? `${app.applicant.first_name || ""} ${app.applicant.last_name || ""}`.trim() : "Не указано",
             amount: app.amount ? `${parseFloat(app.amount).toLocaleString("ru-RU")} ₽` : "Не указано",
-            status: statusLabels[app.status] || app.status,
-            date: new Date(app.created_at).toLocaleDateString("ru-RU"),
+            status: statusLabels[app.status] || app.status || "Не указано",
+            date: app.created_at ? new Date(app.created_at).toLocaleDateString("ru-RU") : new Date().toLocaleDateString("ru-RU"),
           }))
 
         setStats({
-          total: applications.length,
-          clients: clients.length,
+          total: apps.length,
+          clients: clientList.length,
           approved,
           totalAmount,
         })
         setRecentApplications(recent)
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching data:", error)
+        // Don't show error toast for 401 - redirect will happen
+        if (error.status !== 401) {
+          console.error("Error details:", error)
+        }
+        setStats({ total: 0, clients: 0, approved: 0, totalAmount: 0 })
+        setRecentApplications([])
       } finally {
         setLoading(false)
       }
@@ -154,11 +164,11 @@ export default function AgentDashboardPage() {
                         (key) => statusLabels[key] === app.status,
                       ) || "draft"
                       return (
-                        <tr key={app.id} className="border-b border-border last:border-0">
-                          <td className="py-3 text-sm text-primary font-medium">{app.id}</td>
-                          <td className="py-3 text-sm text-foreground">{app.company}</td>
-                          <td className="py-3 text-sm text-foreground">{app.amount}</td>
-                          <td className="py-3">
+                    <tr key={app.id} className="border-b border-border last:border-0">
+                      <td className="py-3 text-sm text-primary font-medium">{app.id}</td>
+                      <td className="py-3 text-sm text-foreground">{app.company}</td>
+                      <td className="py-3 text-sm text-foreground">{app.amount}</td>
+                      <td className="py-3">
                             <Badge className={statusColors[statusKey]}>{app.status}</Badge>
                           </td>
                           <td className="py-3 text-sm text-muted-foreground">{app.date}</td>

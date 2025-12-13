@@ -65,46 +65,17 @@ export interface Bank {
   is_mfo: boolean
 }
 
-export interface CompanyManagement {
-  id: number
-  position: string
-  full_name: string
-  phone: string | null
-  email: string | null
-  passport_series: string | null
-  passport_number: string | null
-  passport_issued_by: string | null
-  passport_issued_date: string | null
-  company: number
-}
-
-export interface CompanyFounder {
-  id: number
-  founder_type: "individual" | "legal"
-  full_name?: string
-  company_name?: string
-  inn: string
-  share_percentage: number
-  share_amount: number
-  passport_series?: string
-  passport_number?: string
-  passport_issued_by?: string
-  passport_issued_date?: string
-  address?: string
-  company: number
-}
-
-export interface CompanyContact {
-  id: number
-  full_name: string
-  position: string
-  phone: string | null
-  email: string | null
-  is_main_contact: boolean
-  company: number
-}
-
 export interface Company {
+  id: number
+  name: string
+  inn: string | null
+  address: string
+  requisites: unknown | null
+  created_at: string
+  created_by: number | null
+}
+
+export interface MyCompany {
   id: number
   name: string
   short_name?: string
@@ -115,8 +86,8 @@ export interface Company {
   okpo?: string | null
   okved?: string | null
   address: string
-  legal_address?: string
-  actual_address?: string
+  legal_address?: string | null
+  actual_address?: string | null
   phone?: string | null
   email?: string | null
   website?: string | null
@@ -134,9 +105,45 @@ export interface Company {
   correspondent_account?: string | null
   etp_accounts?: any[] | null
   contact_persons?: CompanyContact[]
-  requisites: unknown | null
   created_at: string
   created_by: number | null
+}
+
+export interface CompanyManagement {
+  id: number
+  position: string
+  full_name: string
+  phone?: string | null
+  email?: string | null
+  passport_series?: string | null
+  passport_number?: string | null
+  passport_issued_by?: string | null
+  passport_issued_date?: string | null
+  inn?: string | null
+}
+
+export interface CompanyFounder {
+  id: number
+  founder_type: "individual" | "legal"
+  full_name?: string | null
+  company_name?: string | null
+  inn?: string | null
+  share_percentage?: number | null
+  share_amount?: number | null
+  passport_series?: string | null
+  passport_number?: string | null
+  passport_issued_by?: string | null
+  passport_issued_date?: string | null
+  address?: string | null
+}
+
+export interface CompanyContact {
+  id: number
+  full_name: string
+  position: string
+  phone: string
+  email: string
+  is_main_contact?: boolean
 }
 
 export interface Document {
@@ -183,6 +190,33 @@ function getAuthHeaders(): HeadersInit {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
+// Helper to handle 401 errors (unauthorized)
+async function handleUnauthorized(): Promise<void> {
+  // Try to refresh token first
+  const refreshToken = localStorage.getItem("refresh_token")
+  if (refreshToken) {
+    try {
+      const response = await authApi.refreshToken(refreshToken)
+      if (response.access) {
+        localStorage.setItem("access_token", response.access)
+        // Token refreshed successfully, don't redirect
+        return
+      }
+    } catch (error) {
+      // Refresh failed, continue to logout
+    }
+  }
+  
+  // If refresh failed or no refresh token, redirect to login
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("access_token")
+    localStorage.removeItem("refresh_token")
+    if (window.location.pathname.startsWith("/dashboard")) {
+      window.location.href = "/auth/login"
+    }
+  }
+}
+
 // API Error handler
 class ApiError extends Error {
   constructor(
@@ -196,6 +230,12 @@ class ApiError extends Error {
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
+    // Handle 401 Unauthorized - try to refresh token
+    if (response.status === 401) {
+      await handleUnauthorized()
+      throw new ApiError(response.status, "Требуется авторизация. Пожалуйста, войдите в систему.")
+    }
+    
     const errorData = await response.json().catch(() => ({}))
     const message =
       errorData.detail || errorData.message || Object.values(errorData).flat().join(", ") || "Произошла ошибка"
@@ -382,13 +422,6 @@ export const companiesApi = {
     return handleResponse<Company>(response)
   },
 
-  getMyCompany: async (): Promise<Company> => {
-    const response = await fetch(`${API_BASE_URL}/companies/my_company/`, {
-      headers: { ...getAuthHeaders() },
-    })
-    return handleResponse<Company>(response)
-  },
-
   create: async (data: Omit<Company, "id" | "created_at" | "created_by">): Promise<Company> => {
     const response = await fetch(`${API_BASE_URL}/companies/`, {
       method: "POST",
@@ -407,13 +440,21 @@ export const companiesApi = {
     return handleResponse<Company>(response)
   },
 
-  updateMyCompany: async (data: Partial<Company>): Promise<Company> => {
+  // My Company API
+  getMyCompany: async (): Promise<MyCompany> => {
+    const response = await fetch(`${API_BASE_URL}/companies/my_company/`, {
+      headers: { ...getAuthHeaders() },
+    })
+    return handleResponse<MyCompany>(response)
+  },
+
+  updateMyCompany: async (data: Partial<MyCompany>): Promise<MyCompany> => {
     const response = await fetch(`${API_BASE_URL}/companies/my_company/`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...getAuthHeaders() },
       body: JSON.stringify(data),
     })
-    return handleResponse<Company>(response)
+    return handleResponse<MyCompany>(response)
   },
 }
 
@@ -426,14 +467,7 @@ export const companyManagementApi = {
     return handleResponse<CompanyManagement[]>(response)
   },
 
-  get: async (id: number): Promise<CompanyManagement> => {
-    const response = await fetch(`${API_BASE_URL}/company-management/${id}/`, {
-      headers: { ...getAuthHeaders() },
-    })
-    return handleResponse<CompanyManagement>(response)
-  },
-
-  create: async (data: Omit<CompanyManagement, "id" | "company">): Promise<CompanyManagement> => {
+  create: async (data: Omit<CompanyManagement, "id">): Promise<CompanyManagement> => {
     const response = await fetch(`${API_BASE_URL}/company-management/`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...getAuthHeaders() },
@@ -442,7 +476,7 @@ export const companyManagementApi = {
     return handleResponse<CompanyManagement>(response)
   },
 
-  update: async (id: number, data: Partial<Omit<CompanyManagement, "id" | "company">>): Promise<CompanyManagement> => {
+  update: async (id: number, data: Partial<Omit<CompanyManagement, "id">>): Promise<CompanyManagement> => {
     const response = await fetch(`${API_BASE_URL}/company-management/${id}/`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...getAuthHeaders() },
@@ -456,7 +490,7 @@ export const companyManagementApi = {
       method: "DELETE",
       headers: { ...getAuthHeaders() },
     })
-    return handleResponse<void>(response)
+    return handleResponse(response)
   },
 }
 
@@ -469,14 +503,7 @@ export const companyFoundersApi = {
     return handleResponse<CompanyFounder[]>(response)
   },
 
-  get: async (id: number): Promise<CompanyFounder> => {
-    const response = await fetch(`${API_BASE_URL}/company-founders/${id}/`, {
-      headers: { ...getAuthHeaders() },
-    })
-    return handleResponse<CompanyFounder>(response)
-  },
-
-  create: async (data: Omit<CompanyFounder, "id" | "company">): Promise<CompanyFounder> => {
+  create: async (data: Omit<CompanyFounder, "id">): Promise<CompanyFounder> => {
     const response = await fetch(`${API_BASE_URL}/company-founders/`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...getAuthHeaders() },
@@ -485,7 +512,7 @@ export const companyFoundersApi = {
     return handleResponse<CompanyFounder>(response)
   },
 
-  update: async (id: number, data: Partial<Omit<CompanyFounder, "id" | "company">>): Promise<CompanyFounder> => {
+  update: async (id: number, data: Partial<Omit<CompanyFounder, "id">>): Promise<CompanyFounder> => {
     const response = await fetch(`${API_BASE_URL}/company-founders/${id}/`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...getAuthHeaders() },
@@ -499,7 +526,7 @@ export const companyFoundersApi = {
       method: "DELETE",
       headers: { ...getAuthHeaders() },
     })
-    return handleResponse<void>(response)
+    return handleResponse(response)
   },
 }
 
@@ -512,14 +539,7 @@ export const companyContactsApi = {
     return handleResponse<CompanyContact[]>(response)
   },
 
-  get: async (id: number): Promise<CompanyContact> => {
-    const response = await fetch(`${API_BASE_URL}/company-contacts/${id}/`, {
-      headers: { ...getAuthHeaders() },
-    })
-    return handleResponse<CompanyContact>(response)
-  },
-
-  create: async (data: Omit<CompanyContact, "id" | "company">): Promise<CompanyContact> => {
+  create: async (data: Omit<CompanyContact, "id">): Promise<CompanyContact> => {
     const response = await fetch(`${API_BASE_URL}/company-contacts/`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...getAuthHeaders() },
@@ -528,7 +548,7 @@ export const companyContactsApi = {
     return handleResponse<CompanyContact>(response)
   },
 
-  update: async (id: number, data: Partial<Omit<CompanyContact, "id" | "company">>): Promise<CompanyContact> => {
+  update: async (id: number, data: Partial<Omit<CompanyContact, "id">>): Promise<CompanyContact> => {
     const response = await fetch(`${API_BASE_URL}/company-contacts/${id}/`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...getAuthHeaders() },
@@ -542,7 +562,7 @@ export const companyContactsApi = {
       method: "DELETE",
       headers: { ...getAuthHeaders() },
     })
-    return handleResponse<void>(response)
+    return handleResponse(response)
   },
 }
 

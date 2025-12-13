@@ -39,7 +39,7 @@ const news = [
 ]
 
 const categoryColors: Record<string, string> = {
-  Банки: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  Банки: "bg-primary/10 text-primary border-primary/20",
   Госпрограммы: "bg-green-500/10 text-green-500 border-green-500/20",
   Платформа: "bg-purple-500/10 text-purple-500 border-purple-500/20",
 }

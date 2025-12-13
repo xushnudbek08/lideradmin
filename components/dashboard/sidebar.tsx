@@ -104,7 +104,7 @@ export function Sidebar({ role }: SidebarProps) {
             asChild
             className={cn("w-full bg-primary text-primary-foreground hover:bg-primary/90", isCollapsed && "px-2")}
           >
-            <Link href={`/dashboard/${role}/create-application`}>
+            <Link href={`/dashboard/${role}/calculator`}>
               <PlusCircle className="w-4 h-4" />
               {!isCollapsed && <span className="ml-2">Создать заявку</span>}
             </Link>

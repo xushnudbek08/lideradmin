@@ -34,6 +34,31 @@ function getAuthHeaders() {
         Authorization: `Bearer ${token}`
     } : {};
 }
+// Helper to handle 401 errors (unauthorized)
+async function handleUnauthorized() {
+    // Try to refresh token first
+    const refreshToken = localStorage.getItem("refresh_token");
+    if (refreshToken) {
+        try {
+            const response = await authApi.refreshToken(refreshToken);
+            if (response.access) {
+                localStorage.setItem("access_token", response.access);
+                // Token refreshed successfully, don't redirect
+                return;
+            }
+        } catch (error) {
+        // Refresh failed, continue to logout
+        }
+    }
+    // If refresh failed or no refresh token, redirect to login
+    if ("TURBOPACK compile-time truthy", 1) {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        if (window.location.pathname.startsWith("/dashboard")) {
+            window.location.href = "/auth/login";
+        }
+    }
+}
 // API Error handler
 class ApiError extends Error {
     status;
@@ -44,6 +69,11 @@ class ApiError extends Error {
 }
 async function handleResponse(response) {
     if (!response.ok) {
+        // Handle 401 Unauthorized - try to refresh token
+        if (response.status === 401) {
+            await handleUnauthorized();
+            throw new ApiError(response.status, "Требуется авторизация. Пожалуйста, войдите в систему.");
+        }
         const errorData = await response.json().catch(()=>({}));
         const message = errorData.detail || errorData.message || Object.values(errorData).flat().join(", ") || "Произошла ошибка";
         throw new ApiError(response.status, message);
@@ -256,14 +286,6 @@ const companiesApi = {
         });
         return handleResponse(response);
     },
-    getMyCompany: async ()=>{
-        const response = await fetch(`${API_BASE_URL}/companies/my_company/`, {
-            headers: {
-                ...getAuthHeaders()
-            }
-        });
-        return handleResponse(response);
-    },
     create: async (data)=>{
         const response = await fetch(`${API_BASE_URL}/companies/`, {
             method: "POST",
@@ -286,6 +308,15 @@ const companiesApi = {
         });
         return handleResponse(response);
     },
+    // My Company API
+    getMyCompany: async ()=>{
+        const response = await fetch(`${API_BASE_URL}/companies/my_company/`, {
+            headers: {
+                ...getAuthHeaders()
+            }
+        });
+        return handleResponse(response);
+    },
     updateMyCompany: async (data)=>{
         const response = await fetch(`${API_BASE_URL}/companies/my_company/`, {
             method: "PATCH",
@@ -301,14 +332,6 @@ const companiesApi = {
 const companyManagementApi = {
     list: async ()=>{
         const response = await fetch(`${API_BASE_URL}/company-management/`, {
-            headers: {
-                ...getAuthHeaders()
-            }
-        });
-        return handleResponse(response);
-    },
-    get: async (id)=>{
-        const response = await fetch(`${API_BASE_URL}/company-management/${id}/`, {
             headers: {
                 ...getAuthHeaders()
             }
@@ -356,14 +379,6 @@ const companyFoundersApi = {
         });
         return handleResponse(response);
     },
-    get: async (id)=>{
-        const response = await fetch(`${API_BASE_URL}/company-founders/${id}/`, {
-            headers: {
-                ...getAuthHeaders()
-            }
-        });
-        return handleResponse(response);
-    },
     create: async (data)=>{
         const response = await fetch(`${API_BASE_URL}/company-founders/`, {
             method: "POST",
@@ -399,14 +414,6 @@ const companyFoundersApi = {
 const companyContactsApi = {
     list: async ()=>{
         const response = await fetch(`${API_BASE_URL}/company-contacts/`, {
-            headers: {
-                ...getAuthHeaders()
-            }
-        });
-        return handleResponse(response);
-    },
-    get: async (id)=>{
-        const response = await fetch(`${API_BASE_URL}/company-contacts/${id}/`, {
             headers: {
                 ...getAuthHeaders()
             }
@@ -587,6 +594,29 @@ function AuthProvider({ children }) {
                 }
             }["AuthProvider.useEffect.initAuth"];
             initAuth();
+            // Auto-refresh token every 4 minutes (before 5 minute expiry)
+            const tokenRefreshInterval = setInterval({
+                "AuthProvider.useEffect.tokenRefreshInterval": async ()=>{
+                    const refreshToken = localStorage.getItem("refresh_token");
+                    if (refreshToken) {
+                        try {
+                            const response = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["authApi"].refreshToken(refreshToken);
+                            if (response.access) {
+                                localStorage.setItem("access_token", response.access);
+                                // Silently refresh profile to keep user data up to date
+                                await refreshProfile();
+                            }
+                        } catch (error) {
+                            // Refresh failed, user will be logged out on next API call
+                            console.error("Token refresh failed:", error);
+                        }
+                    }
+                }
+            }["AuthProvider.useEffect.tokenRefreshInterval"], 4 * 60 * 1000) // 4 minutes
+            ;
+            return ({
+                "AuthProvider.useEffect": ()=>clearInterval(tokenRefreshInterval)
+            })["AuthProvider.useEffect"];
         }
     }["AuthProvider.useEffect"], []);
     const login = async (username, password)=>{
@@ -615,7 +645,7 @@ function AuthProvider({ children }) {
         children: children
     }, void 0, false, {
         fileName: "[project]/lib/auth-context.tsx",
-        lineNumber: 64,
+        lineNumber: 84,
         columnNumber: 5
     }, this);
 }

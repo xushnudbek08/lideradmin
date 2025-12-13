@@ -41,6 +41,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false)
     }
     initAuth()
+
+    // Auto-refresh token every 4 minutes (before 5 minute expiry)
+    const tokenRefreshInterval = setInterval(async () => {
+      const refreshToken = localStorage.getItem("refresh_token")
+      if (refreshToken) {
+        try {
+          const response = await authApi.refreshToken(refreshToken)
+          if (response.access) {
+            localStorage.setItem("access_token", response.access)
+            // Silently refresh profile to keep user data up to date
+            await refreshProfile()
+          }
+        } catch (error) {
+          // Refresh failed, user will be logged out on next API call
+          console.error("Token refresh failed:", error)
+        }
+      }
+    }, 4 * 60 * 1000) // 4 minutes
+
+    return () => clearInterval(tokenRefreshInterval)
   }, [])
 
   const login = async (username: string, password: string): Promise<UserRole> => {

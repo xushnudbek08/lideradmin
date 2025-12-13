@@ -14,7 +14,7 @@ import { toast } from "sonner"
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-500/10 text-gray-500 border-gray-500/20",
-  submitted: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  submitted: "bg-primary/10 text-primary border-primary/20",
   under_review: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
   approved: "bg-green-500/10 text-green-500 border-green-500/20",
   rejected: "bg-red-500/10 text-red-500 border-red-500/20",
@@ -41,24 +41,35 @@ export default function AgentApplicationsPage() {
       try {
         setLoading(true)
         const data = await applicationsApi.getMyApplications()
+        
+        // Check if data is valid
+        if (!data || !Array.isArray(data)) {
+          setApplications([])
+          return
+        }
+        
         // Fetch company info for applications that have company
         const applicationsWithCompany = await Promise.all(
           data.map(async (app: any) => {
-            if (app.company) {
+            if (app && app.company) {
               try {
                 const company = await companiesApi.get(app.company)
                 return { ...app, companyData: company }
               } catch {
-                return app
+                return { ...app, companyData: null }
               }
             }
-            return app
+            return { ...app, companyData: null }
           }),
         )
         setApplications(applicationsWithCompany)
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching applications:", error)
-        toast.error("Ошибка при загрузке заявок")
+        // Don't show error toast for 401 - redirect will happen
+        if (error.status !== 401) {
+          toast.error(error.message || "Ошибка при загрузке заявок")
+        }
+        setApplications([])
       } finally {
         setLoading(false)
       }

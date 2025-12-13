@@ -31,7 +31,7 @@ const news = [
 ]
 
 const categoryColors: Record<string, string> = {
-  Гарантии: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  Гарантии: "bg-primary/10 text-primary border-primary/20",
   Законодательство: "bg-orange-500/10 text-orange-500 border-orange-500/20",
   Тендеры: "bg-green-500/10 text-green-500 border-green-500/20",
 }

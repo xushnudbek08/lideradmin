@@ -40,38 +40,44 @@ export default function AgentClientsPage() {
         setLoading(true)
         // Get all companies - agent sees companies of their clients
         const companiesResponse = await companiesApi.list(100, 0)
-        const companies = companiesResponse.results
+        const companies = companiesResponse?.results || (Array.isArray(companiesResponse) ? companiesResponse : [])
         
         // Get client users to match with companies
         const clientUsers = await applicationsApi.getClients()
+        const users = Array.isArray(clientUsers) ? clientUsers : []
         
         // Create a map of user id to company
         const userCompanyMap = new Map()
         companies.forEach((company: any) => {
-          if (company.created_by) {
+          if (company && company.created_by) {
             userCompanyMap.set(company.created_by, company)
           }
         })
         
-        const clientsWithCompany = clientUsers.map((user: any) => {
+        const clientsWithCompany = users.map((user: any) => {
+          if (!user) return null
           const company = userCompanyMap.get(user.id)
           return {
             id: user.id,
-            name: company?.name || user.first_name + " " + user.last_name,
-            email: user.email,
+            name: company?.name || `${user.first_name || ""} ${user.last_name || ""}`.trim() || "Не указано",
+            email: user.email || "",
             company: company?.id || null,
             inn: company?.inn || "",
-            contact: user.first_name + " " + user.last_name,
+            contact: `${user.first_name || ""} ${user.last_name || ""}`.trim() || "Не указано",
             phone: user.phone || "",
             applications: 0, // Would need to count from applications
             status: "Активный",
           }
-        })
+        }).filter(Boolean)
         
         setClients(clientsWithCompany)
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching clients:", error)
-        toast.error("Ошибка при загрузке клиентов")
+        // Don't show error toast for 401 - redirect will happen
+        if (error.status !== 401) {
+          toast.error(error.message || "Ошибка при загрузке клиентов")
+        }
+        setClients([])
       } finally {
         setLoading(false)
       }

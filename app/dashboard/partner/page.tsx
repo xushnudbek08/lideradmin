@@ -14,7 +14,7 @@ import { Search } from "lucide-react"
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-500/10 text-gray-500 border-gray-500/20",
-  submitted: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  submitted: "bg-primary/10 text-primary border-primary/20",
   under_review: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
   approved: "bg-green-500/10 text-green-500 border-green-500/20",
   rejected: "bg-red-500/10 text-red-500 border-red-500/20",
@@ -40,10 +40,15 @@ export default function PartnerDashboardPage() {
       try {
         setLoading(true)
         const response = await applicationsApi.list(100, 0)
-        setApplications(response.results)
-      } catch (error) {
+        const applications = response?.results || (Array.isArray(response) ? response : [])
+        setApplications(applications)
+      } catch (error: any) {
         console.error("Error fetching applications:", error)
-        toast.error("Ошибка при загрузке заявок")
+        // Don't show error toast for 401 - redirect will happen
+        if (error.status !== 401) {
+          toast.error(error.message || "Ошибка при загрузке заявок")
+        }
+        setApplications([])
       } finally {
         setLoading(false)
       }

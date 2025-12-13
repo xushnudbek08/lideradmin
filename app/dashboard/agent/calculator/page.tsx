@@ -1,161 +1,262 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Calculator, Info } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { CalculatorWidget } from "@/components/dashboard/calculator-widget"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
+import { applicationsApi, banksApi, companiesApi } from "@/lib/api"
+import { toast } from "sonner"
+import { useForm } from "react-hook-form"
+import { Loader2 } from "lucide-react"
 
 export default function AgentCalculatorPage() {
   const router = useRouter()
-  const [amount, setAmount] = useState(5000000)
-  const [term, setTerm] = useState(12)
-  const [rate, setRate] = useState(15)
-  const [type, setType] = useState("annuity")
+  const [isLoading, setIsLoading] = useState(false)
+  const [banks, setBanks] = useState<any[]>([])
+  const [companies, setCompanies] = useState<any[]>([])
+  const [loadingBanks, setLoadingBanks] = useState(true)
+  const [selectedCompany, setSelectedCompany] = useState<number | null>(null)
+  const [calculatedAmount, setCalculatedAmount] = useState<number | null>(null)
+  const [calculatedTerm, setCalculatedTerm] = useState<number | null>(null)
 
-  const monthlyRate = rate / 100 / 12
-  const monthlyPayment =
-    type === "annuity"
-      ? (amount * monthlyRate * Math.pow(1 + monthlyRate, term)) / (Math.pow(1 + monthlyRate, term) - 1)
-      : amount / term + amount * monthlyRate
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      title: "",
+      amount: "",
+      selected_banks: [] as number[],
+      notes: "",
+    },
+  })
 
-  const totalPayment = monthlyPayment * term
-  const overpayment = totalPayment - amount
+  const selectedBanks = watch("selected_banks")
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("ru-RU", {
-      style: "currency",
-      currency: "RUB",
-      maximumFractionDigits: 0,
-    }).format(value)
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoadingBanks(true)
+        const [banksResponse, companiesResponse] = await Promise.all([
+          banksApi.list(100, 0),
+          companiesApi.list(100, 0),
+        ])
+        
+        // Handle banks response
+        if (banksResponse && banksResponse.results) {
+          setBanks(banksResponse.results)
+        } else if (Array.isArray(banksResponse)) {
+          setBanks(banksResponse)
+        } else {
+          setBanks([])
+        }
+        
+        // Handle companies response
+        if (companiesResponse && companiesResponse.results) {
+          setCompanies(companiesResponse.results)
+        } else if (Array.isArray(companiesResponse)) {
+          setCompanies(companiesResponse)
+        } else {
+          setCompanies([])
+        }
+      } catch (error: any) {
+        console.error("Error fetching data:", error)
+        toast.error(error.message || "Ошибка при загрузке данных")
+        setBanks([])
+        setCompanies([])
+      } finally {
+        setLoadingBanks(false)
+      }
+    }
+    fetchData()
+  }, [])
+
+  const handleCalculate = (amount: number, term: number) => {
+    setCalculatedAmount(amount)
+    setCalculatedTerm(term)
+    setValue("amount", amount.toString())
+    toast.success("Значения применены к заявке")
+  }
+
+  const toggleBank = (bankId: number) => {
+    const current = selectedBanks || []
+    if (current.includes(bankId)) {
+      setValue("selected_banks", current.filter((id) => id !== bankId))
+    } else {
+      setValue("selected_banks", [...current, bankId])
+    }
+  }
+
+  const onSubmit = async (data: any) => {
+    if (!selectedCompany) {
+      toast.error("Пожалуйста, выберите компанию клиента")
+      return
+    }
+    
+    setIsLoading(true)
+    try {
+      await applicationsApi.create({
+        title: data.title,
+        company: selectedCompany,
+        amount: data.amount || null,
+        selected_banks: data.selected_banks || [],
+        notes: data.notes || "",
+        status: "draft",
+      })
+      toast.success("Заявка успешно создана")
+      router.push("/dashboard/agent/applications")
+    } catch (error: any) {
+      toast.error(error.message || "Ошибка при создании заявки")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Calculator Form */}
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Calculator className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-foreground">Кредитный калькулятор</CardTitle>
-                <CardDescription>Рассчитайте параметры финансирования</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Amount */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-foreground">Сумма кредита</Label>
-                <span className="text-sm text-primary font-medium">{formatCurrency(amount)}</span>
-              </div>
-              <Slider
-                value={[amount]}
-                onValueChange={([value]) => setAmount(value)}
-                min={100000}
-                max={50000000}
-                step={100000}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>100 000 ₽</span>
-                <span>50 000 000 ₽</span>
-              </div>
-            </div>
+    <div className="space-y-6 max-w-6xl mx-auto">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Создать заявку</h1>
+        <p className="text-muted-foreground mt-1">Рассчитайте параметры и заполните данные для создания заявки</p>
+      </div>
 
-            {/* Term */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-foreground">Срок кредита</Label>
-                <span className="text-sm text-primary font-medium">{term} мес.</span>
-              </div>
-              <Slider value={[term]} onValueChange={([value]) => setTerm(value)} min={6} max={84} step={1} />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>6 мес.</span>
-                <span>84 мес.</span>
-              </div>
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Calculator Widget - Left Side */}
+        <div className="lg:col-span-1">
+          <CalculatorWidget onCalculate={handleCalculate} role="agent" />
+        </div>
 
-            {/* Rate */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-foreground">Процентная ставка</Label>
-                <span className="text-sm text-primary font-medium">{rate}%</span>
-              </div>
-              <Slider value={[rate]} onValueChange={([value]) => setRate(value)} min={5} max={30} step={0.5} />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>5%</span>
-                <span>30%</span>
-              </div>
-            </div>
-
-            {/* Payment Type */}
-            <div className="space-y-2">
-              <Label className="text-foreground">Тип платежа</Label>
-              <Select value={type} onValueChange={setType}>
-                <SelectTrigger className="bg-input border-border text-foreground">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border">
-                  <SelectItem value="annuity">Аннуитетный</SelectItem>
-                  <SelectItem value="differential">Дифференцированный</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Results */}
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-foreground">Результаты расчёта</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <div className="p-4 bg-primary/10 rounded-xl">
-                <p className="text-sm text-muted-foreground mb-1">Ежемесячный платёж</p>
-                <p className="text-3xl font-bold text-primary">{formatCurrency(monthlyPayment)}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-secondary rounded-xl">
-                  <p className="text-sm text-muted-foreground mb-1">Сумма кредита</p>
-                  <p className="text-xl font-semibold text-foreground">{formatCurrency(amount)}</p>
+        {/* Application Form - Right Side */}
+        <div className="lg:col-span-2">
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <Card className="bg-card border-border">
+              <CardHeader>
+                <CardTitle className="text-foreground">Данные заявки</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="company" className="text-foreground">
+                    Компания клиента *
+                  </Label>
+                  <Select value={selectedCompany?.toString() || ""} onValueChange={(value) => setSelectedCompany(Number(value))}>
+                    <SelectTrigger className="bg-background border-border text-foreground">
+                      <SelectValue placeholder="Выберите компанию" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border">
+                      {companies.map((company) => (
+                        <SelectItem key={company.id} value={company.id.toString()}>
+                          {company.name} {company.inn ? `(ИНН: ${company.inn})` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {!selectedCompany && <p className="text-xs text-destructive">Выберите компанию клиента</p>}
                 </div>
-                <div className="p-4 bg-secondary rounded-xl">
-                  <p className="text-sm text-muted-foreground mb-1">Переплата</p>
-                  <p className="text-xl font-semibold text-accent">{formatCurrency(overpayment)}</p>
+
+                <div className="space-y-2">
+                  <Label htmlFor="title" className="text-foreground">
+                    Название заявки *
+                  </Label>
+                  <Input
+                    id="title"
+                    {...register("title", { required: "Название обязательно" })}
+                    className="bg-background border-border text-foreground"
+                    placeholder="Например: Банковская гарантия для тендера"
+                  />
+                  {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
                 </div>
-              </div>
 
-              <div className="p-4 bg-secondary rounded-xl">
-                <p className="text-sm text-muted-foreground mb-1">Общая сумма выплат</p>
-                <p className="text-xl font-semibold text-foreground">{formatCurrency(totalPayment)}</p>
-              </div>
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="amount" className="text-foreground">
+                    Сумма (₽)
+                  </Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    {...register("amount")}
+                    className="bg-background border-border text-foreground"
+                    placeholder="5000000"
+                    readOnly={!!calculatedAmount}
+                  />
+                  {calculatedAmount && (
+                    <p className="text-xs text-muted-foreground">Значение применено из калькулятора</p>
+                  )}
+                </div>
 
-            <div className="flex items-start gap-2 p-3 bg-accent/10 rounded-lg">
-              <Info className="w-4 h-4 text-accent mt-0.5" />
-              <p className="text-sm text-accent">
-                Расчёт носит информационный характер. Точные условия уточняйте в банке.
-              </p>
-            </div>
+                <div className="space-y-2">
+                  <Label className="text-foreground">Выберите банки</Label>
+                  {loadingBanks ? (
+                    <div className="flex items-center justify-center p-6">
+                      <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : banks.length === 0 ? (
+                    <div className="p-6 text-center border border-border rounded-lg bg-background">
+                      <p className="text-sm text-muted-foreground">Банки не найдены</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 border border-border rounded-lg bg-background max-h-48 overflow-y-auto">
+                      {banks.map((bank) => (
+                        <label
+                          key={bank.id}
+                          className="flex items-center gap-2 p-2 rounded border border-border cursor-pointer hover:bg-secondary transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedBanks?.includes(bank.id) || false}
+                            onChange={() => toggleBank(bank.id)}
+                            className="rounded border-border"
+                          />
+                          <span className="text-xs text-foreground">{bank.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-            <Button 
-              onClick={() => router.push('/dashboard/agent/create-application')}
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              Создать заявку с этими параметрами
-            </Button>
-          </CardContent>
-        </Card>
+                <div className="space-y-2">
+                  <Label htmlFor="notes" className="text-foreground">
+                    Примечания
+                  </Label>
+                  <Textarea
+                    id="notes"
+                    {...register("notes")}
+                    className="bg-background border-border text-foreground"
+                    placeholder="Дополнительная информация..."
+                    rows={3}
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => router.back()}
+                    className="border-border text-foreground bg-transparent"
+                  >
+                    Отмена
+                  </Button>
+                  <Button type="submit" disabled={isLoading} className="bg-primary text-primary-foreground">
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Создание...
+                      </>
+                    ) : (
+                      "Создать заявку"
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </form>
+        </div>
       </div>
     </div>
   )

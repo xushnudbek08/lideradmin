@@ -13,7 +13,7 @@ import { toast } from "sonner"
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-500/10 text-gray-500 border-gray-500/20",
-  submitted: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  submitted: "bg-primary/10 text-primary border-primary/20",
   under_review: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
   approved: "bg-green-500/10 text-green-500 border-green-500/20",
   rejected: "bg-red-500/10 text-red-500 border-red-500/20",
@@ -51,7 +51,14 @@ export default function ClientApplicationsPage() {
       try {
         setLoading(true)
         const data = await applicationsApi.getMyApplications()
-        const formatted = data.map((app) => ({
+        
+        // Check if data is valid
+        if (!data || !Array.isArray(data)) {
+          setApplications([])
+          return
+        }
+        
+        const formatted = data.map((app: any) => ({
           id: app.id,
           idDisplay: String(app.id),
           type: app.product_type || "bank_guarantee",
@@ -60,16 +67,20 @@ export default function ClientApplicationsPage() {
           fz: app.fz || "", // ФЗ (44-ФЗ, 223-ФЗ и т.д.)
           notice_number: app.notice_number || "", // № извещения
           contract_security: app.contract_security || null, // Обеспечение контракта
-          status: app.status,
-          statusLabel: statusLabels[app.status] || app.status,
-          created_at: app.created_at,
-          date: new Date(app.created_at).toLocaleDateString("ru-RU"),
-          banks_count: app.selected_banks ? app.selected_banks.length : 0,
+          status: app.status || "draft",
+          statusLabel: statusLabels[app.status] || app.status || "Черновик",
+          created_at: app.created_at || new Date().toISOString(),
+          date: app.created_at ? new Date(app.created_at).toLocaleDateString("ru-RU") : new Date().toLocaleDateString("ru-RU"),
+          banks_count: app.selected_banks ? (Array.isArray(app.selected_banks) ? app.selected_banks.length : 0) : 0,
         }))
         setApplications(formatted)
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching applications:", error)
-        toast.error("Ошибка при загрузке заявок")
+        // Don't show error toast for 401 - redirect will happen
+        if (error.status !== 401) {
+          toast.error(error.message || "Ошибка при загрузке заявок")
+        }
+        setApplications([])
       } finally {
         setLoading(false)
       }
