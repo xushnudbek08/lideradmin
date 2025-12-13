@@ -166,7 +166,7 @@ export default function AgentClientsPage() {
               >
                 <X className="w-4 h-4" />
               </Button>
-            </div>
+                  </div>
             <p className="text-sm text-muted-foreground mt-2">(* поля, обязательные для заполнения)</p>
           </CardHeader>
           <CardContent>
@@ -258,8 +258,8 @@ export default function AgentClientsPage() {
                 </Button>
               </div>
             </form>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
       )}
 
       {/* Clients List */}
@@ -328,7 +328,7 @@ export default function AgentClientsPage() {
                 )}
               </tbody>
             </table>
-          </div>
+      </div>
         </CardContent>
       </Card>
     </div>

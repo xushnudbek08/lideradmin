@@ -29,8 +29,8 @@ const statusLabels: Record<string, string> = {
 
 const productTabs = [
   { value: "all", label: "Все продукты" },
-  { value: "tz", label: "ТЗ" },
   { value: "bank_guarantee", label: "БГ" },
+  { value: "tz", label: "ТЗ" },
   { value: "kik", label: "КИК" },
   { value: "revolving_credit", label: "ОБОРОТНЫЙ КРЕДИТ" },
   { value: "express_credit", label: "ЭКСПРЕСС-КРЕДИТ" },
@@ -141,7 +141,7 @@ export default function ClientApplicationsPage() {
               />
             </div>
             <Button variant="outline" className="border-border text-foreground bg-transparent">
-              <Filter className="w-4 h-4 mr-2" />
+                <Filter className="w-4 h-4 mr-2" />
               ФИЛЬТР
             </Button>
           </div>
@@ -152,15 +152,15 @@ export default function ClientApplicationsPage() {
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="text-foreground">Сводная таблица по созданным Вами заявкам:</CardTitle>
-        </CardHeader>
+            </CardHeader>
         <CardContent>
           <Tabs value={productTab} onValueChange={setProductTab} className="w-full">
-            <TabsList className="grid grid-cols-3 lg:grid-cols-9 gap-2 bg-card border-border mb-6 h-auto p-1">
+            <TabsList className="grid grid-cols-3 lg:grid-cols-6 xl:grid-cols-9 gap-1 bg-card border-border mb-6 h-auto p-1 flex-wrap">
               {productTabs.map((tab) => (
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs whitespace-nowrap"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs px-1 py-1 whitespace-nowrap"
                 >
                   {tab.label}
                 </TabsTrigger>
@@ -216,8 +216,8 @@ export default function ClientApplicationsPage() {
                           ))}
                         </tbody>
                       </table>
-                    </div>
-                  </div>
+                </div>
+              </div>
                 ) : (
                   <Card className="bg-card border-border">
                     <CardContent className="p-12 text-center">
@@ -235,8 +235,8 @@ export default function ClientApplicationsPage() {
               </div>
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
     </div>
   )
 }

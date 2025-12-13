@@ -2,10 +2,6 @@
   "/auth/login/page": "app/auth/login/page.js",
   "/dashboard/client/applications/page": "app/dashboard/client/applications/page.js",
   "/dashboard/client/calculator/page": "app/dashboard/client/calculator/page.js",
-  "/dashboard/client/chat/page": "app/dashboard/client/chat/page.js",
-  "/dashboard/client/company/page": "app/dashboard/client/company/page.js",
-  "/dashboard/client/documents/page": "app/dashboard/client/documents/page.js",
-  "/dashboard/client/news/page": "app/dashboard/client/news/page.js",
   "/dashboard/client/page": "app/dashboard/client/page.js",
   "/dashboard/client/wins/page": "app/dashboard/client/wins/page.js",
   "/page": "app/page.js"

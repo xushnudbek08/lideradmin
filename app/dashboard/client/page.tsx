@@ -71,15 +71,15 @@ export default function ClientAccreditationPage() {
       </div>
 
       {/* Instructions */}
-      <Card className="bg-primary/10 border-primary/20">
+      <Card className="bg-blue-500/10 border-blue-500/20">
         <CardHeader>
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Info className="w-5 h-5 text-primary" />
+            <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Info className="w-5 h-5 text-blue-500" />
             </div>
             <div className="flex-1">
-              <CardTitle className="text-primary text-lg">Инструкция</CardTitle>
-              <CardDescription className="text-primary/80 mt-2">
+              <CardTitle className="text-blue-500 text-lg">Инструкция</CardTitle>
+              <CardDescription className="text-blue-500/80 mt-2">
                 <ol className="list-decimal list-inside space-y-2 text-sm">
                   <li>Выберите тип электронной цифровой подписи (ЭЦП), который вы будете использовать</li>
                   <li>Заполните все обязательные поля формы с данными вашей компании</li>

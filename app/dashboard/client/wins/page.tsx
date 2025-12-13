@@ -5,14 +5,28 @@ import { Trophy, Plus, Loader2, Search } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { applicationsApi } from "@/lib/api"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+
+const productTabs = [
+  { value: "all", label: "Все победы" },
+  { value: "bank_guarantee", label: "БГ" },
+  { value: "tz", label: "ТЗ" },
+  { value: "kik", label: "КИК" },
+  { value: "revolving_credit", label: "ОБОРОТНЫЙ КРЕДИТ" },
+  { value: "express_credit", label: "ЭКСПРЕСС-КРЕДИТ" },
+  { value: "factoring", label: "ФАКТОРИНГ" },
+  { value: "rko", label: "РКО" },
+  { value: "special_account", label: "СПЕЦСЧЕТ" },
+]
 
 export default function ClientWinsPage() {
   const [wins, setWins] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  const [productTab, setProductTab] = useState("all")
   const router = useRouter()
 
   useEffect(() => {
@@ -27,7 +41,7 @@ export default function ClientWinsPage() {
           return
         }
         
-        const formatted = data.map((win: any) => ({
+        let filtered = data.map((win: any) => ({
           id: win.id,
           protocol_date: win.protocol_date || win.created_at || new Date().toISOString(), // Выход протокола
           nmc: win.nmc || win.amount || null, // НМЦ, руб
@@ -35,8 +49,15 @@ export default function ClientWinsPage() {
           customer: win.customer || win.customer_name || "", // Заказчик
           subject: win.subject || win.title || "", // Предмет закупки
           notice_number: win.notice_number || "", // № извещения
+          product_type: win.product_type || "tz", // Add product type
         }))
-        setWins(formatted)
+
+        // Filter by product tab
+        if (productTab !== "all") {
+          filtered = filtered.filter(win => win.product_type === productTab)
+        }
+
+        setWins(filtered)
       } catch (error: any) {
         console.error("Error fetching wins:", error)
         // Don't show error toast for 401 - redirect will happen
@@ -50,7 +71,7 @@ export default function ClientWinsPage() {
     }
 
     fetchWins()
-  }, [])
+  }, [productTab])
 
   const filteredWins = wins.filter((win) => {
     const searchLower = searchQuery.toLowerCase()
@@ -99,80 +120,93 @@ export default function ClientWinsPage() {
         </div>
       </div>
 
-      {/* Search */}
-      <Card className="bg-card border-border">
-        <CardContent className="p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-            <Input
-              placeholder="Поиск..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-input border-border text-foreground h-9"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Product Tabs */}
+      <Tabs value={productTab} onValueChange={setProductTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 xl:grid-cols-9 h-auto flex-wrap">
+          {productTabs.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value} className="text-xs px-1 py-1">
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-      {/* Wins Table */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-foreground">Выигранные тендеры ({filteredWins.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {filteredWins.length > 0 ? (
-            <div className="border border-border rounded-lg overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-secondary border-b border-border">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Выход протокола</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">НМЦ, руб</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Сумма БГ, руб</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Заказчик</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Предмет закупки</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Действия</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {filteredWins.map((win) => (
-                      <tr key={win.id} className="hover:bg-secondary/50 transition-colors">
-                        <td className="px-4 py-3 text-sm text-foreground">{formatDate(win.protocol_date)}</td>
-                        <td className="px-4 py-3 text-sm text-foreground font-medium">{formatCurrency(win.nmc)}</td>
-                        <td className="px-4 py-3 text-sm text-foreground font-medium">{formatCurrency(win.bg_amount)}</td>
-                        <td className="px-4 py-3 text-sm text-foreground">{win.customer || "—"}</td>
-                        <td className="px-4 py-3 text-sm text-foreground">{win.subject || "—"}</td>
-                        <td className="px-4 py-3">
-                          <Button
-                            onClick={() => handleCreateApplication(win)}
-                            size="sm"
-                            className="bg-primary text-primary-foreground hover:bg-primary/90"
-                          >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Создать заявку
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        <TabsContent value={productTab} className="mt-6">
+          {/* Search */}
+          <Card className="bg-card border-border">
+            <CardContent className="p-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  placeholder="Поиск..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 bg-input border-border text-foreground h-9"
+                />
               </div>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <Trophy className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground mb-4">Побед пока нет</p>
-              <Button
-                onClick={() => router.push("/dashboard/client/create-application")}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Создать заявку
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+
+          {/* Wins Table */}
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="text-foreground">Выигранные тендеры ({filteredWins.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {filteredWins.length > 0 ? (
+                <div className="border border-border rounded-lg overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-secondary border-b border-border">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Выход протокола</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">НМЦ, руб</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Сумма БГ, руб</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Заказчик</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Предмет закупки</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Действия</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {filteredWins.map((win) => (
+                          <tr key={win.id} className="hover:bg-secondary/50 transition-colors">
+                            <td className="px-4 py-3 text-sm text-foreground">{formatDate(win.protocol_date)}</td>
+                            <td className="px-4 py-3 text-sm text-foreground font-medium">{formatCurrency(win.nmc)}</td>
+                            <td className="px-4 py-3 text-sm text-foreground font-medium">{formatCurrency(win.bg_amount)}</td>
+                            <td className="px-4 py-3 text-sm text-foreground">{win.customer || "—"}</td>
+                            <td className="px-4 py-3 text-sm text-foreground">{win.subject || "—"}</td>
+                            <td className="px-4 py-3">
+                              <Button
+                                onClick={() => handleCreateApplication(win)}
+                                size="sm"
+                                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                              >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Создать заявку
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Trophy className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground mb-4">Побед пока нет</p>
+                  <Button
+                    onClick={() => router.push("/dashboard/client/calculator")}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Создать заявку
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

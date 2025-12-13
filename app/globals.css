@@ -3,7 +3,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ЛидерГарант custom color scheme - Vibrant */
+/* ЛидерГарант custom color scheme */
 :root {
   --background: #0b1d3a;
   --foreground: #ffffff;
@@ -11,33 +11,33 @@
   --card-foreground: #ffffff;
   --popover: #0f2847;
   --popover-foreground: #ffffff;
-  --primary: #3CE8D1;
+  --primary: #0abab5;
   --primary-foreground: #0b1d3a;
-  --secondary: #FF521D;
+  --secondary: #1a3a5c;
   --secondary-foreground: #ffffff;
   --muted: #1a3a5c;
   --muted-foreground: #94a3b8;
-  --accent: #FF521D;
+  --accent: #e53935;
   --accent-foreground: #ffffff;
-  --destructive: #E03E9D;
+  --destructive: #e53935;
   --destructive-foreground: #ffffff;
   --border: #1e4976;
   --input: #1a3a5c;
-  --ring: #3CE8D1;
-  --chart-1: #3CE8D1;
-  --chart-2: #FF521D;
-  --chart-3: #FFD93D;
-  --chart-4: #E03E9D;
-  --chart-5: #3CE8D1;
+  --ring: #0abab5;
+  --chart-1: #0abab5;
+  --chart-2: #e53935;
+  --chart-3: #3b82f6;
+  --chart-4: #f59e0b;
+  --chart-5: #8b5cf6;
   --radius: 0.625rem;
   --sidebar: #071428;
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: #3CE8D1;
+  --sidebar-primary: #0abab5;
   --sidebar-primary-foreground: #0b1d3a;
   --sidebar-accent: #1a3a5c;
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #1e4976;
-  --sidebar-ring: #3CE8D1;
+  --sidebar-ring: #0abab5;
 }
 
 @theme inline {

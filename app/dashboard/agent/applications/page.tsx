@@ -28,6 +28,18 @@ const statusLabels: Record<string, string> = {
   rejected: "Отклонено",
 }
 
+const productTabs = [
+  { value: "all", label: "Все продукты" },
+  { value: "bank_guarantee", label: "БГ" },
+  { value: "tz", label: "ТЗ" },
+  { value: "kik", label: "КИК" },
+  { value: "revolving_credit", label: "ОБОРОТНЫЙ КРЕДИТ" },
+  { value: "express_credit", label: "ЭКСПРЕСС-КРЕДИТ" },
+  { value: "factoring", label: "ФАКТОРИНГ" },
+  { value: "rko", label: "РКО" },
+  { value: "special_account", label: "СПЕЦСЧЕТ" },
+]
+
 export default function AgentApplicationsPage() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
@@ -80,16 +92,17 @@ export default function AgentApplicationsPage() {
 
   const filteredApplications = applications
     .filter((app) => {
-      const matchesSearch =
+    const matchesSearch =
         app.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         `ZAY-${String(app.id).padStart(3, "0")}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
         app.applicant?.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         app.applicant?.last_name?.toLowerCase().includes(searchQuery.toLowerCase())
 
-      const matchesStatus = statusFilter === "all" || app.status === statusFilter
+    const matchesStatus = statusFilter === "all" || app.status === statusFilter
+    const matchesProduct = productTab === "all" || app.type === productTab
 
-      return matchesSearch && matchesStatus
-    })
+    return matchesSearch && matchesStatus && matchesProduct
+  })
     .map((app) => ({
       id: app.id,
       idDisplay: `ZAY-${String(app.id).padStart(3, "0")}`,
@@ -163,48 +176,53 @@ export default function AgentApplicationsPage() {
 
       {/* Product Tabs */}
       <Tabs value={productTab} onValueChange={setProductTab} className="w-full">
-        <TabsList className="bg-card border-border">
-          <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Все продукты
-          </TabsTrigger>
-          <TabsTrigger value="bank_guarantee" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Банковская гарантия
-          </TabsTrigger>
-          <TabsTrigger value="credit" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Кредит
-          </TabsTrigger>
-          <TabsTrigger value="factoring" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Факторинг
-          </TabsTrigger>
+        <TabsList className="grid grid-cols-3 lg:grid-cols-6 xl:grid-cols-9 gap-1 bg-card border-border mb-6 h-auto p-1 flex-wrap">
+          {productTabs.map((tab) => (
+            <TabsTrigger
+              key={tab.value}
+              value={tab.value}
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs px-1 py-1 whitespace-nowrap"
+            >
+              {tab.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         <TabsContent value={productTab} className="mt-6">
-          {/* Applications Table */}
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="text-foreground">Мои заявки ({filteredApplications.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="text-left border-b border-border">
-                      <th className="pb-3 text-sm font-medium text-muted-foreground">№ Заявки</th>
-                      <th className="pb-3 text-sm font-medium text-muted-foreground">Компания</th>
-                      <th className="pb-3 text-sm font-medium text-muted-foreground">ИНН</th>
-                      <th className="pb-3 text-sm font-medium text-muted-foreground">Тип</th>
-                      <th className="pb-3 text-sm font-medium text-muted-foreground">Сумма</th>
-                      <th className="pb-3 text-sm font-medium text-muted-foreground">Банк</th>
-                      <th className="pb-3 text-sm font-medium text-muted-foreground">Статус</th>
-                      <th className="pb-3 text-sm font-medium text-muted-foreground">Дата</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+          <div className="space-y-4">
+            {/* Summary */}
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>
+                Всего заявок по {productTab === "all" ? "всем продуктам" : productTabs.find((t) => t.value === productTab)?.label}: {filteredApplications.length}
+              </span>
+            </div>
+
+      {/* Applications Table */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-foreground">Мои заявки ({filteredApplications.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="text-left border-b border-border">
+                  <th className="pb-3 text-sm font-medium text-muted-foreground">№ Заявки</th>
+                  <th className="pb-3 text-sm font-medium text-muted-foreground">Компания</th>
+                  <th className="pb-3 text-sm font-medium text-muted-foreground">ИНН</th>
+                  <th className="pb-3 text-sm font-medium text-muted-foreground">Тип</th>
+                  <th className="pb-3 text-sm font-medium text-muted-foreground">Сумма</th>
+                  <th className="pb-3 text-sm font-medium text-muted-foreground">Банк</th>
+                  <th className="pb-3 text-sm font-medium text-muted-foreground">Статус</th>
+                  <th className="pb-3 text-sm font-medium text-muted-foreground">Дата</th>
+                </tr>
+              </thead>
+              <tbody>
                     {filteredApplications.length > 0 ? (
                       filteredApplications.map((app) => {
                         const statusKey = app.status
                         return (
-                          <tr key={app.id} className="border-b border-border last:border-0 hover:bg-muted/50">
+                  <tr key={app.id} className="border-b border-border last:border-0 hover:bg-muted/50">
                             <td className="py-4">
                               <button
                                 onClick={() => handleApplicationClick(app.id)}
@@ -226,13 +244,13 @@ export default function AgentApplicationsPage() {
                               )}
                             </td>
                             <td className="py-4 text-sm text-muted-foreground">{app.inn || "—"}</td>
-                            <td className="py-4 text-sm text-foreground">{app.type}</td>
-                            <td className="py-4 text-sm text-foreground font-medium">{app.amount}</td>
-                            <td className="py-4 text-sm text-foreground">{app.bank}</td>
-                            <td className="py-4">
+                    <td className="py-4 text-sm text-foreground">{app.type}</td>
+                    <td className="py-4 text-sm text-foreground font-medium">{app.amount}</td>
+                    <td className="py-4 text-sm text-foreground">{app.bank}</td>
+                    <td className="py-4">
                               <Badge className={statusColors[statusKey]}>{app.statusLabel}</Badge>
-                            </td>
-                            <td className="py-4 text-sm text-muted-foreground">{app.date}</td>
+                    </td>
+                    <td className="py-4 text-sm text-muted-foreground">{app.date}</td>
                           </tr>
                         )
                       })
@@ -240,14 +258,15 @@ export default function AgentApplicationsPage() {
                       <tr>
                         <td colSpan={8} className="py-8 text-center text-muted-foreground">
                           Нет заявок
-                        </td>
-                      </tr>
+                    </td>
+                  </tr>
                     )}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

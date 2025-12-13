@@ -13,7 +13,7 @@ import { toast } from "sonner"
 import { Search } from "lucide-react"
 
 const statusColors: Record<string, string> = {
-  draft: "bg-gray-500/10 text-gray-500 border-gray-500/20",
+  draft: "bg-gray-400/10 text-gray-500 border-gray-500/20",
   submitted: "bg-primary/10 text-primary border-primary/20",
   under_review: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
   approved: "bg-green-500/10 text-green-500 border-green-500/20",
@@ -165,12 +165,12 @@ export default function PartnerDashboardPage() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-5 bg-secondary">
-              <TabsTrigger value="all">Все ({applications.length})</TabsTrigger>
-              <TabsTrigger value="submitted">Отправлено ({applications.filter((a) => a.status === "submitted").length})</TabsTrigger>
-              <TabsTrigger value="under_review">Рассмотрение ({applications.filter((a) => a.status === "under_review").length})</TabsTrigger>
-              <TabsTrigger value="approved">Одобрено ({applications.filter((a) => a.status === "approved").length})</TabsTrigger>
-              <TabsTrigger value="rejected">Отклонено ({applications.filter((a) => a.status === "rejected").length})</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 bg-secondary h-auto flex-wrap gap-1">
+              <TabsTrigger value="all" className="text-xs px-1 py-1">Все ({applications.length})</TabsTrigger>
+              <TabsTrigger value="submitted" className="text-xs px-1 py-1">Отправлено ({applications.filter((a) => a.status === "submitted").length})</TabsTrigger>
+              <TabsTrigger value="under_review" className="text-xs px-1 py-1">Рассмотрение ({applications.filter((a) => a.status === "under_review").length})</TabsTrigger>
+              <TabsTrigger value="approved" className="text-xs px-1 py-1">Одобрено ({applications.filter((a) => a.status === "approved").length})</TabsTrigger>
+              <TabsTrigger value="rejected" className="text-xs px-1 py-1">Отклонено ({applications.filter((a) => a.status === "rejected").length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value={activeTab} className="mt-4">
